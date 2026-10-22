@@ -1,0 +1,1932 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1차시 데이터 최적화와 손실함수</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="assets/common.css">
+<link rel="stylesheet" href="assets/theme.css?v=20261022d">
+<style>
+  /* 그림과 식을 같은 색으로 잇는다 */
+  :root { --c-real: #1e3a8a; --c-pos: #e11d48; --c-neg: #0891b2; --c-mj: #f59e0b; --c-sy: #8b5cf6; --c-mine: #2563eb; --c-flat: #64748b; --c-loss: #0e9f9a; --c-slope: #7c3aed; --c-move: #ea580c; }
+  .c-real { color: var(--c-real); font-weight: 800; } .c-pos { color: var(--c-pos); font-weight: 800; } .c-neg { color: var(--c-neg); font-weight: 800; }
+  .c-mj { color: var(--c-mj); font-weight: 800; } .c-sy { color: var(--c-sy); font-weight: 800; } .c-mine { color: var(--c-mine); font-weight: 800; }
+  .c-loss { color: var(--c-loss); font-weight: 800; } .c-slope { color: var(--c-slope); font-weight: 800; } .c-move { color: var(--c-move); font-weight: 800; }
+  .chart { width: 100%; height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; touch-action: none; }
+  .chart.click { cursor: pointer; }
+  .part { margin-top: 26px; padding-top: 22px; border-top: 2px dashed var(--line); }
+  .part-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .part-h .no { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--grad); color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 15px; }
+  .part-h h3 { font-size: 19px; margin: 0; }
+  .part-h p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; margin-top: 8px; color: var(--muted); }
+  .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; background: currentColor; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: #fff; padding: 8px 14px; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; color: var(--muted); }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--ink); color: #fff; }
+  .calc { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; font-size: 15.5px; line-height: 1.9; }
+  .calc .mono, .mono { font-family: var(--mono); }
+  .calc .row { display: flex; gap: 8px; align-items: baseline; }
+  .calc .tag { flex: none; font-size: 12.5px; font-weight: 800; border-radius: 999px; padding: 1px 9px; color: #fff; }
+  .eq { font-family: var(--mono); font-size: 17px; background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; overflow-x: auto; white-space: nowrap; }
+  .chips { line-height: 2.3; font-family: var(--mono); font-size: 14.5px; }
+  .chip-e { display: inline-block; border-radius: 6px; padding: 0 6px; color: #7f1d1d; border: 1px solid rgba(225,29,72,.35); }
+  .chip-e sub { font-size: 10.5px; color: #9f1239; margin-left: 1px; }
+  .big-num { font-size: 26px; font-weight: 800; font-family: var(--mono); }
+  .stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+  .stat { flex: 1; min-width: 110px; background: var(--soft); border-radius: 12px; padding: 10px 14px; }
+  .stat small { display: block; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .stat.best { background: #e8fbf6; }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .vs { grid-template-columns: 1fr; } }
+  .vs-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: #fff; }
+  .vs-card h4 { margin: 0 0 8px; font-size: 16px; }
+  .sum-line { font-family: var(--mono); font-size: 13.5px; margin-top: 8px; line-height: 1.7; word-break: break-all; }
+  .verdict { margin-top: 8px; font-weight: 800; font-size: 17px; }
+  .err-table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-family: var(--mono); }
+  .err-table th { font-family: inherit; font-weight: 700; color: var(--muted); font-size: 12.5px; padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+  .err-table td { padding: 3px 6px; text-align: right; border-bottom: 1px solid #f2f0f7; }
+  .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; cursor: pointer; margin-right: 14px; }
+  .gd-msg { font-weight: 700; margin-top: 6px; min-height: 1.4em; }
+  .gd-msg.ok { color: #0b7f7b; } .gd-msg.bad { color: #e11d48; } .gd-msg.warn { color: #b45309; }
+  details.deep { margin-top: 16px; border: 2px solid #ddd6fe; border-radius: 12px; padding: 12px 16px; background: #faf8ff; }
+  details.deep summary { font-weight: 800; cursor: pointer; color: #6d28d9; }
+  details.deep p { margin: 8px 0 0; }
+  .survey { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+  .survey .full { grid-column: 1 / -1; }
+  @media (max-width: 860px) { .survey { grid-template-columns: 1fr; } }
+  .survey label b { display: block; margin-bottom: 4px; font-size: 15px; }
+  .survey label > span { display: block; color: var(--muted); font-size: 13.5px; margin-bottom: 6px; }
+  .survey select { width: 100%; font: inherit; font-size: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
+  .req-star { color: #e11d48; }
+  .story { display: flex; gap: 14px; align-items: flex-start; }
+  .story .emoji { font-size: 40px; line-height: 1; }
+  .sum-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); margin-bottom: 16px; }
+  @media (max-width: 860px) { .sum-grid { grid-template-columns: 1fr; } }
+  .sum-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .sum-card h4 { margin: 0 0 6px; font-size: 16px; }
+  .sum-card p { margin: 6px 0 0; font-size: 14.5px; color: var(--muted); }
+  .sum-card canvas { width: 100%; height: auto; display: block; border-radius: 8px; background: #f8fafc; }
+  /* 큰 그림 */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 4px; }
+  .flow i { font-style: normal; color: var(--muted); font-weight: 800; }
+  .flow-box { flex: 1 1 0; min-width: 120px; background: var(--soft); border-radius: 12px; padding: 10px 12px; text-align: center; }
+  .flow-box b { display: block; font-size: 15px; } .flow-box span { font-size: 12.5px; color: var(--muted); }
+  .flow-box.end { background: #fff1e6; }
+  .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+  .why-grid.two { grid-template-columns: 1fr 1fr; margin-top: 4px; }
+  @media (max-width: 960px) { .why-grid.two { grid-template-columns: 1fr; } }
+  .seg-wrap { flex-wrap: wrap; }
+  .gal-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .gal-tabs button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; color: var(--ink); }
+  .gal-tabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .gal-tabs button.bad { border-color: #fda4af; }
+  .gal-tabs button.bad.on { background: #be123c; border-color: #be123c; }
+  @media (max-width: 960px) { .why-grid { grid-template-columns: 1fr; } }
+  .why { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: #fff; }
+  .why h4 { margin: 0 0 8px; font-size: 16px; }
+  .why p { margin: 0 0 8px; font-size: 14.5px; line-height: 1.75; }
+  .why canvas { width: 100%; max-width: 340px; height: auto; display: block; border: 1px solid var(--line); border-radius: 10px; margin-top: 4px; }
+  /* 탭 안의 단계 */
+  .sub { display: none; } .sub.on { display: block; }
+  .subnav { margin: 4px 0 16px; }
+  .subnav.bottom { margin: 18px 0 0; padding-top: 14px; border-top: 2px dashed var(--line); }
+  .sub-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .sub-pills button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; color: var(--muted); }
+  .sub-pills button.done { color: var(--ink); background: var(--soft); }
+  .sub-pills button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .sub-btns { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .sub-btns .btn[disabled] { opacity: .4; cursor: default; }
+  ul.simple { margin: 6px 0 0; padding-left: 22px; font-size: 17px; line-height: 2; }
+  .mini-fig canvas { width: 100%; max-width: 360px; height: auto; display: block; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+  .cap-c { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .val-box { margin-top: 6px; max-width: 360px; background: #f1f5ff; border-radius: 10px; padding: 8px 12px; font-size: 14.5px; }
+  .val-box b { font-size: 18px; color: var(--accent); }
+  .val-box.loss { background: #e6f7f6; } .val-box.loss b { color: var(--c-loss); }
+  table.cmp { border-collapse: collapse; margin-top: 14px; font-size: 15px; width: 100%; max-width: 640px; }
+  table.cmp th, table.cmp td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; }
+  table.cmp tr:first-child th { background: var(--soft); }
+  table.cmp tbody th, table.cmp tr th:first-child { background: #f8fafc; width: 70px; }
+  .why-grid.one { grid-template-columns: 1fr; margin-top: 4px; }
+  .chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chain i { font-style: normal; font-weight: 800; color: var(--muted); }
+  .chain .ch { flex: 1 1 0; min-width: 130px; background: var(--soft); border-radius: 12px; padding: 8px 12px; text-align: center; }
+  .chain .ch small { display: block; font-size: 12px; color: var(--muted); font-weight: 700; }
+  .chain .ch b { font-family: var(--mono); font-size: 15px; }
+  .chain .ch.end { background: #e6f7f6; }
+  .derive { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: 15.5px; line-height: 2.1; }
+  .derive .dn { display: inline-block; width: 24px; font-weight: 800; color: var(--accent); }
+  .tagx { display: inline-block; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 1px 9px; background: #eef2ff; color: #4338ca; margin-left: 6px; vertical-align: middle; }
+  .tagx.q { background: #e6f7f6; color: #0b7f7b; }
+  .pt-title { font-weight: 800; font-size: 16px; margin-bottom: 10px; }
+  .pt-no { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--c-move); color: #fff; font-size: 14px; margin-right: 4px; }
+  .pt-grid { display: flex; align-items: stretch; gap: 6px; }
+  .pt-box { flex: 1; background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; text-align: center; }
+  .pt-box small { display: block; font-size: 12px; color: var(--muted); font-weight: 700; }
+  .pt-box b { display: block; font-family: var(--mono); font-size: 22px; line-height: 1.3; }
+  .pt-box span { font-size: 12px; color: var(--muted); }
+  .pt-box.err { background: #fff1f2; border-color: #fecdd3; }
+  .pt-op { align-self: center; font-weight: 800; font-size: 18px; color: var(--muted); }
+  .pt-sub { margin: 14px 0 6px; font-weight: 800; font-size: 14px; }
+  .pt-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 14.5px; table-layout: fixed; }
+  .pt-table th, .pt-table td { border: 1px solid var(--line); padding: 5px 2px; text-align: center; cursor: pointer; }
+  .pt-table th { background: #f8fafc; font-family: Pretendard, sans-serif; color: var(--real, #1e3a8a); }
+  .pt-table td { font-weight: 800; }
+  .pt-table .on { background: #fff7ed; outline: 2px solid var(--c-move); outline-offset: -2px; }
+  .pt-table .sq-row td { font-weight: 600; font-size: 12.5px; color: #9f1239; background: #fff7f8; }
+  .loss-meter { margin-top: 14px; background: #f0fbfa; border: 1px solid #b7e6e2; border-radius: 12px; padding: 10px 12px; }
+  .lm-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-weight: 700; font-size: 14px; }
+  .lm-top b { font-family: var(--mono); font-size: 22px; margin-left: auto; }
+  .lm-tr { font-size: 13px; font-weight: 800; border-radius: 999px; padding: 1px 8px; }
+  .lm-tr.down { background: #dcfce7; color: #15803d; } .lm-tr.up { background: #ffe4e6; color: #be123c; }
+  .lm-bar { position: relative; height: 16px; background: #e2e8f0; border-radius: 999px; margin-top: 8px; }
+  .lm-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #0e9f9a, #f59e0b 55%, #e11d48); transition: width .15s; }
+  .lm-best { position: absolute; top: -5px; width: 10px; height: 10px; margin-left: -5px; background: var(--c-move); transform: rotate(45deg); top: 3px; }
+  .lm-scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+  .steps3 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .steps3 i { font-style: normal; font-weight: 800; color: var(--muted); }
+  .steps3 .s3 { background: var(--soft); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 700; }
+  .steps3 .s3 b { color: var(--accent); }
+  .steps3 .s3.end { background: #e6f7f6; }
+  table.drv { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 620px; }
+  table.drv th, table.drv td { border: 1px solid var(--line); padding: 5px 8px; text-align: center; }
+  table.drv thead th { background: #f8fafc; font-size: 13px; }
+  table.drv th b, table.drv td b:first-child { color: var(--accent); }
+  table.drv .now { background: #fff7ed; }
+  table.drv tfoot td { background: #f1f5ff; font-weight: 700; }
+  table.drv tfoot tr.avg td { background: #e6f7f6; font-size: 15px; }
+  table.drv tfoot tr.avg .now { background: #d5f2ef; }
+  .mini-part { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 14px; background: #fff; }
+  .mini-part h4 { margin: 0 0 10px; font-size: 17px; }
+  .mp-no { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--grad); color: #fff; font-size: 14px; margin-right: 4px; }
+  #fixBtns .btn[disabled] { opacity: .45; cursor: default; }
+  #fixBtns .btn.done { background: #dcfce7; border-color: #86efac; color: #15803d; opacity: 1; }
+  .fix-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+  .fix-table th, .fix-table td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; font-family: var(--mono); }
+  .fix-table th { background: #f8fafc; font-family: Pretendard, sans-serif; font-size: 13px; }
+  .fix-table .hid { color: #cbd5e1; }
+  .fix-table tfoot td { background: #f1f5ff; font-weight: 700; font-family: Pretendard, sans-serif; }
+  .fix-table tfoot tr.avg td { background: #e6f7f6; font-size: 16px; }
+  .mini-part.review { background: #f8faff; border-style: dashed; }
+  .rev-q { margin-top: 12px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+  .rev-q input { width: 110px; font-family: var(--mono); text-align: center; }
+  .why-minus { margin-bottom: 12px; }
+  .why-minus table.cmp { max-width: none; font-size: 14px; }
+  section.parked { display: none !important; }
+  /* 선수 학습 확인 */
+  .pre-status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; font-size: 14px; font-weight: 700; }
+  .pre-status .dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; background: #eef0f6; color: var(--muted); border: 2px solid transparent; cursor: pointer; }
+  .pre-status .dot.ok { background: #dcfce7; color: #15803d; } .pre-status .dot.re { background: #fef3c7; color: #b45309; }
+  .pre-status .dot.no { background: #ffe4e6; color: #be123c; } .pre-status .dot.idk { background: #e0e7ff; color: #4338ca; }
+  .pre-card { border: 2px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; background: #fff; }
+  .pre-card.ok { border-color: #86efac; } .pre-card.no { border-color: #fda4af; } .pre-card.idk { border-color: #a5b4fc; } .pre-card.re { border-color: #fcd34d; }
+  .pre-top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .pre-top .n { flex: none; width: 26px; height: 26px; border-radius: 8px; background: var(--ink); color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+  .pre-top h3 { font-size: 17px; margin: 0; }
+  .pre-top .use { font-size: 12.5px; color: #0b7f7b; background: #dff7f5; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
+  .pre-body { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; margin-top: 10px; }
+  .pre-body.wide { grid-template-columns: 1fr 300px; }
+  @media (max-width: 760px) { .pre-body, .pre-body.wide { grid-template-columns: 1fr; } }
+  .pre-q { font-size: 16px; }
+  .pre-ans { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .pre-ans input[type=text] { width: 110px; font-family: var(--mono); font-size: 16px; text-align: center; }
+  .pre-ans .choice { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 8px 12px; font: inherit; font-family: var(--mono); font-size: 14.5px; cursor: pointer; }
+  .pre-ans .choice.sel { border-color: var(--ink); background: var(--ink); color: #fff; }
+  .pre-fb { margin-top: 8px; font-weight: 700; font-size: 14.5px; min-height: 1.3em; }
+  .pre-fb.ok { color: #15803d; } .pre-fb.no { color: #be123c; } .pre-fb.idk { color: #4338ca; }
+  .pre-ex { margin-top: 12px; background: #f8fafc; border: 1px dashed #c7d5f5; border-radius: 12px; padding: 12px 14px; display: none; }
+  .pre-ex.open { display: block; }
+  .pre-ex .ex-grid { display: grid; grid-template-columns: 360px 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 760px) { .pre-ex .ex-grid { grid-template-columns: 1fr; } }
+  .pre-ex canvas, .pre-body canvas { width: 100%; max-width: 360px; height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+  .pre-ex p { margin: 0 0 8px; font-size: 15px; line-height: 1.7; }
+  .pre-ex table { border-collapse: collapse; font-family: var(--mono); font-size: 14px; }
+  .pre-ex td, .pre-ex th { border: 1px solid var(--line); padding: 4px 10px; text-align: center; }
+  .pre-ex th { background: #eef2ff; font-family: inherit; }
+  .pre-toggle { margin-top: 8px; }
+  .pre-card { display: none; } .pre-card.cur { display: block; }
+  .pre-grp { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px 4px 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+  .pre-grp b { font-size: 12.5px; color: var(--muted); margin-right: 2px; }
+  .pre-status .dot.cur { border-color: var(--ink); }
+  .pre-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4px; }
+  .pre-nav.top { margin: 0 0 12px; }
+  .pre-nav .btn[disabled] { opacity: .4; cursor: default; }
+  .pre-res { border-collapse: collapse; width: 100%; font-size: 15px; }
+  .multi { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; margin-top: 12px; }
+  .multi canvas { width: 100%; max-width: 360px; height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: 10px; position: sticky; top: 70px; }
+  @media (max-width: 760px) { .multi { grid-template-columns: 1fr; } }
+  .mstep { padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .mstep input:disabled { background: #f0fdf4; color: #15803d; font-weight: 700; }
+  .mstep-intro { background: #f1f5ff; border-radius: 10px; padding: 8px 12px; font-size: 14.5px; line-height: 1.7; margin-bottom: 8px; }
+  .mstep-no { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--grad); color: #fff; font-weight: 800; font-size: 12.5px; margin-right: 6px; }
+  .mstep-sol { display: none; margin-top: 6px; font-size: 14.5px; background: #fff7e8; border-radius: 8px; padding: 6px 10px; }
+  .mstep-sol.open { display: block; }
+  .mstep-hint { display: none; margin-top: 6px; font-size: 14.5px; background: #eef6ff; border-radius: 8px; padding: 6px 10px; }
+  .mstep-hint.open { display: block; }
+  .pre-status .dot.half { background: #f1f5f9; color: #475569; border-style: dashed; border-color: #94a3b8; }
+  .pre-res th { text-align: left; vertical-align: top; padding: 8px 12px 8px 0; width: 90px; white-space: nowrap; }
+  .pre-res td { padding: 8px 0; line-height: 1.8; border-bottom: 1px solid var(--line); }
+  .pre-res tr:last-child td { border-bottom: 0; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">∇</span>AI 융합캠프(조민기)</a>
+    <nav class="lesson-nav">
+      <a href="index.html">홈</a>
+      <a href="lesson1.html" class="on">1차시</a>
+      <a href="lesson2.html">2차시</a>
+      <a href="lesson3.html">3차시</a>
+      <a href="lesson4.html">4차시</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="lesson-head">
+    <span class="eyebrow" id="lessonNo">1차시</span>
+    <h1 id="lessonTitle">데이터 최적화와 손실함수</h1>
+    <span class="lesson-date" id="lessonDate">10/23(금)</span>
+  </div>
+  <ol class="stepper" id="stepper"></ol>
+
+  <!-- 1. 큰 그림 -->
+  <section class="screen" data-title="큰 그림" data-key="big" data-lesson="1">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div><h2>데이터 최적화: 무엇을, 왜 할까?</h2><p>손실함수와 경사하강법을 배우기 전에, 이것들이 <b>왜 필요한지</b> 큰 그림부터 봐요.</p></div>
+        <span class="step-time">6분</span>
+      </div>
+      <div class="flow">
+        <div class="flow-box"><b>📊 데이터</b><span>모은 기록</span></div><i>→</i>
+        <div class="flow-box"><b>📏 모델</b><span>규칙: 직선 y = ax</span></div><i>→</i>
+        <div class="flow-box"><b>📉 손실함수</b><span>얼마나 틀렸나?</span></div><i>→</i>
+        <div class="flow-box"><b>⛰️ 경사하강법</b><span>손실을 줄이기</span></div><i>→</i>
+        <div class="flow-box end"><b>🎯 최적의 a</b><span>가장 잘 맞는 규칙</span></div>
+      </div>
+
+      <div class="part">
+        <div class="part-h"><span class="no">1</span><div><h3>데이터 최적화란?</h3><p>모은 데이터에 <b>가장 잘 맞는 규칙(함수)</b>을 찾는 일이에요. 규칙을 찾으면 아직 없는 값도 <b>예측</b>할 수 있어요. 어떤 함수로 규칙을 만들지 골라 보세요.</p></div></div>
+        <div class="cols wide-left">
+          <div>
+            <canvas id="bigChart" class="chart"></canvas>
+          </div>
+          <div>
+            <div class="seg seg-wrap" id="bigMode"><button data-v="line" class="on">📏 일차함수</button><button data-v="quad">⌒ 이차함수</button><button data-v="poly">〰️ 모든 점을 지나는 7차 함수</button></div>
+            <div class="eq" id="bigFormula" style="margin-top:10px;white-space:normal;line-height:1.7"></div>
+            <div class="calc" id="bigNote" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part">
+        <div class="part-h"><span class="no">2</span><div><h3>왜 일차함수(직선)부터 쓸까?</h3><p>여러 분야의 데이터를 골라 보세요. 점들이 대체로 <b>한 줄로</b> 늘어서는 경우가 아주 많아요.</p></div></div>
+        <div class="gal-tabs" id="galTabs"></div>
+        <div class="cols wide-left" style="margin-top:10px">
+          <div>
+            <canvas id="galChart" class="chart"></canvas>
+            <p class="small muted" style="margin:6px 0 0">※ 이해를 돕기 위해 만든 예시 데이터예요.</p>
+          </div>
+          <div><div class="calc" id="galNote"></div></div>
+        </div>
+        <div class="box key" style="margin-top:12px">
+          <b>그래서 데이터 최적화는 보통 직선부터 시작해요</b>
+          <p style="margin-top:6px">① 많은 관계가 <b>"하나가 일정하게 늘면 다른 것도 일정하게 늘어나는"</b> 꼴이에요. 이런 관계는 직선으로 나타나요.</p>
+          <p style="margin-top:4px">② 가장 단순한 규칙이라 <b>뜻을 말로 설명</b>할 수 있어요. 기울기 a = "x가 1 늘 때 y가 늘어나는 양"이에요.</p>
+          <p style="margin-top:4px">③ 데이터에는 <b>잡음</b>(측정 오차, 그날의 컨디션 등)이 섞여 있어요. 위의 7차 함수처럼 너무 복잡한 식은 잡음까지 따라가서 예측을 망쳐요.</p>
+          <p style="margin-top:4px">④ 직선이 잘 안 맞으면(⚠️ 나이와 키처럼) 그때 곡선으로 바꿔요.</p>
+        </div>
+      </div>
+
+      <div class="screen-q" data-hint="날씨 앱, 쇼핑몰 추천, 병원의 검사 수치, 운동 기록 앱 등을 떠올려 보세요.|'○○을 알면 △△을 예측할 수 있다' 꼴로 써 보세요. 예: 공부 시간을 알면 시험 점수를 예측할 수 있다.">내 주변이나 내 진로 분야에서 "데이터로 규칙을 찾아 예측"하는 예를 하나 들어 보세요.</div>
+    </div>
+  </section>
+
+  <!-- 2. 선수 학습 확인 -->
+  <section class="screen" data-title="선수 학습" data-key="pre" data-lesson="1">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div><h2>선수 학습 확인: 준비 운동</h2><p>오늘 수업에 쓰이는 수학 개념을 <b>한 문제씩</b> 확인해요. <b>시험이 아니에요!</b> 모르면 [🤔 모르겠어요]를 누르면 쉬운 설명이 열려요.</p></div>
+        <span class="step-time">12분</span>
+      </div>
+      <div class="pre-status" id="preStatus"></div>
+      <div class="pre-nav top">
+        <button class="btn" id="prePrev">← 이전 문제</button>
+        <span class="small muted" id="preCount"></span>
+        <button class="btn primary" id="preNext">다음 문제 →</button>
+      </div>
+      <div id="preList"></div>
+      <div class="box tip small" style="margin-top:16px">
+        📋 확인 결과(맞음, 다시 풀어 맞음, 모르겠음)는 활동지에 자동으로 담겨요. 선생님이 수업 난이도를 맞추는 데만 써요.
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 손실함수 -->
+  <section class="screen" data-title="손실함수" data-key="loss" data-lesson="1">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div><h2>손실함수: 얼마나 틀렸는지 숫자 하나로</h2><p>직선이 데이터와 얼마나 어긋나는지 <b>숫자 하나</b>로 나타내는 방법을 배워요. 단계별로 [다음 단계 →]를 눌러 넘어가요.</p></div>
+        <span class="step-time">20분</span>
+      </div>
+      <div class="subnav" data-subnav></div>
+
+      <!-- ① 손실함수는 왜 필요할까? -->
+      <div class="sub" data-sub="왜 필요할까?">
+        <div class="part-h"><span class="no">1</span><div><h3>손실함수는 왜 필요할까?</h3></div></div>
+        <ul class="simple">
+          <li>컴퓨터는 눈으로 "이 직선이 자료에 잘 맞네"를 <b>판단할 수 없어요.</b></li>
+          <li>그래서 직선이 <b>얼마나 틀렸는지</b>를 <b>하나의 수치</b>로 계산해요. 이 값이 <b class="c-loss">손실</b>이에요.</li>
+          <li><b>손실이 작을수록</b> 자료에 잘 맞는 직선이에요.</li>
+        </ul>
+        <div class="matrix-label" style="margin-top:16px;font-size:16px">손실 = 분산 <span class="muted" style="font-weight:600">(기준만 평균 → 직선으로)</span></div>
+        <div class="cols">
+          <div class="mini-fig"><canvas id="lossWhyVar"></canvas><div class="cap-c">분산: <b>평균</b>에서 얼마나 떨어졌나</div><div class="val-box" id="lossWhyVarVal"></div></div>
+          <div class="mini-fig"><canvas id="lossWhyLoss"></canvas><div class="cap-c">손실: <b>직선</b>(y = 17x)에서 얼마나 떨어졌나</div><div class="val-box loss" id="lossWhyLossVal"></div></div>
+        </div>
+        <table class="cmp">
+          <tr><th></th><th>분산</th><th class="c-loss">손실</th></tr>
+          <tr><th>기준</th><td>평균</td><td>직선이 예측한 값</td></tr>
+          <tr><th>차이</th><td>편차 = 값 − 평균</td><td><b>오차 = 실제 − 예측</b></td></tr>
+          <tr><th>계산</th><td>편차²의 평균</td><td><b>오차²의 평균</b></td></tr>
+        </table>
+      </div>
+
+      <!-- ② 손실 구하기 (a 고정 → a 바꾸기 → 식으로) -->
+      <div class="sub" data-sub="손실 구하기">
+        <div class="part-h"><span class="no">2</span><div><h3>손실 구하기</h3><p><b>손실 = 오차²의 평균</b>. 예측값 구하는 법을 복습하고, a를 하나로 정해서 직접 구한 뒤, a를 바꿔 봐요.</p></div></div>
+
+        <div class="mini-part review">
+          <h4><span class="mp-no">↺</span> 복습: 직선 위의 함숫값 = 예측값</h4>
+          <div class="cols wide-left">
+            <div>
+              <canvas id="revChart" class="chart"></canvas>
+            </div>
+            <div>
+              <div class="box key small" style="margin-bottom:10px">일차함수 <b class="mono">y = ax</b>에 x 값을 넣어 계산한 y가 <b>함숫값</b>이에요.<br>데이터 최적화에서는 이 값을 <b class="c-mine">예측값</b>이라고 불러요.</div>
+              <div class="calc" id="revCalc"></div>
+              <div class="rev-q">
+                <div>✏️ <span class="mono">y = 10x</span>에서 x = 0.8일 때 예측값은?</div>
+                <div class="pre-ans" style="margin-top:6px"><input type="text" inputmode="decimal" id="revIn" placeholder="답"><button class="btn primary sm" id="revBtn">확인</button></div>
+                <div class="pre-fb" id="revFb"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-part">
+          <h4><span class="mp-no">①</span> a = 10일 때 손실 구하기</h4>
+          <div class="cols wide-left">
+            <div>
+              <canvas id="fixChart" class="chart"></canvas>
+            </div>
+            <div>
+              <div class="btn-row" id="fixBtns">
+                <button class="btn sm" data-fs="1">① 오차 구하기</button>
+                <button class="btn sm" data-fs="2">② 제곱하기</button>
+                <button class="btn sm" data-fs="3">③ 평균 내기</button>
+                <button class="btn sm" data-fs="0" title="처음부터 다시">↺ 다시 하기</button>
+              </div>
+              <table class="fix-table" id="fixTable"></table>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-part">
+          <h4><span class="mp-no">②</span> a를 바꾸면 손실은?</h4>
+          <div class="cols wide-left">
+            <div>
+              <canvas id="c1" class="chart click"></canvas>
+              <div class="slider-row" style="margin-top:8px"><label class="c-mine">기울기 a</label><input type="range" class="a-slider" id="myA" min="0" max="30" step="0.1" value="10"><output></output></div>
+              <div class="legend">
+                <span style="color:var(--c-real)">● 실제 기록</span>
+                <span style="color:var(--c-mine)"><i></i>직선 y = ax</span>
+                <span style="color:var(--c-pos)"><i></i>오차 +</span>
+                <span style="color:var(--c-neg)"><i></i>오차 −</span>
+              </div>
+            </div>
+            <div><div class="calc" id="c1Calc"></div></div>
+          </div>
+          <div class="box key" style="margin-top:12px">a를 정하면 손실이 <b>하나로</b> 정해져요. → 손실은 <b>a에 대한 함수</b>예요. 이렇게 써요: <b class="c-loss mono" style="font-size:17px">L(a)</b></div>
+          <div class="screen-q" data-fields="a를 키우면::a를 키우면 오차와 손실은 어떻게 바뀌나요?::예: 처음엔 손실이 줄다가 ...|손실이 작은 a::손실이 가장 작아 보이는 a는 대략 얼마인가요?::예: a = ○○ 근처" data-hint="슬라이더를 0에서 30까지 천천히 움직이며 손실 막대를 보세요.|▼ 줄었어요가 ▲ 늘었어요로 바뀌는 곳을 찾아보세요.">🎯 관찰하기</div>
+        </div>
+
+        <div class="mini-part">
+          <h4><span class="mp-no">③</span> L(a)를 식으로 쓰면?</h4>
+          <p class="small muted" style="margin:0 0 8px">a에 숫자를 넣지 않고 <b>식 그대로</b> ①과 같은 순서로 계산해요.</p>
+          <div class="steps3">
+            <span class="s3"><b>①</b> 오차 구하기</span><i>→</i>
+            <span class="s3"><b>②</b> 제곱하기</span><i>→</i>
+            <span class="s3"><b>③</b> 8개 더하기</span><i>→</i>
+            <span class="s3 end"><b>④</b> 8로 나누기 = 평균</span>
+          </div>
+          <div style="overflow-x:auto;margin-top:10px"><table class="drv" id="drvTable"></table></div>
+          <div class="slider-row" style="margin:10px 0 0"><label class="c-mine">기울기 a</label><input type="range" class="a-slider" min="0" max="30" step="0.1" value="10"><output></output></div>
+          <div class="box key" style="margin-top:12px">
+            <div class="eq" style="font-size:18px;background:#fff"><b class="c-loss">L(a)</b> = <span id="lossFormula"></span></div>
+            <p style="margin-top:8px">a²이 가장 높은 차수 → 손실은 <b>a에 대한 이차함수</b>예요. 그래서 그래프가 <b>∪ 모양 포물선</b>이 돼요.</p>
+            <p class="small" style="margin-top:6px" id="lossCheck"></p>
+          </div>
+          <div class="screen-q" data-fields="① 예측 값::예측 값은 기울기 a에 대한 몇차식인가요?:: ::예측 = a × 시간이에요. ⑤번 점은 0.6시간이니까 예측 = 0.6a예요.~~0.6a는 a를 한 번만 곱한 꼴(a¹)이에요. 그래서 예측 값은 a에 대한 일차식이에요.|② 오차::실제 값은 상수예요. 그렇다면 오차는 기울기 a에 대한 몇차식인가요?:: ::오차 = 실제 − 예측 = 9.6 − 0.6a예요. 실제 값 9.6은 a가 바뀌어도 그대로인 상수예요.~~(상수) − (일차식)에서 가장 높은 차수는 여전히 a¹이에요. 그래서 오차도 a에 대한 일차식이에요.|③ 손실::손실은 각 오차들의 제곱의 평균이에요. 그렇다면 손실은 기울기 a에 대한 몇차식인가요?:: ::일차식을 제곱하면 a끼리 곱해져서 a²이 생겨요. (9.6 − 0.6a)² = 0.36a² − 11.52a + 92.16 → 이차식이에요.~~이차식 8개를 더하고 8로 나눠도 a² 항은 남아요. a² 앞의 수가 모두 양수라서 더해도 사라지지 않거든요. 그래서 손실도 a에 대한 이차식이에요.|④ 결론::손실은 기울기 a에 대한 몇차함수인가요?:: ::위 표의 ④ 줄 L(a) = 0.379a² − 11.465a + 87.025에서 가장 높은 차수를 찾아보세요.~~가장 높은 차수가 a²이에요. 그래서 L(a)는 a에 대한 이차함수이고, a² 앞의 수가 양수라 그래프는 ∪ 모양 포물선이에요.">🎯 손실은 기울기 a에 대한 몇차함수일까요? 차례대로 답해 보세요.</div>
+        </div>
+      </div>
+
+      <!-- ④ 손실 그래프 -->
+      <div class="sub" data-sub="L(a)의 그래프">
+        <div class="part-h"><span class="no">3</span><div><h3>L(a)의 그래프와 꼭짓점</h3><p>L(a)는 이차함수라서 그래프가 <b>∪ 모양 포물선</b>이에요. <b>꼭짓점의 a</b>가 손실이 가장 작은, 가장 잘 맞는 직선의 기울기예요.</p></div></div>
+        <div class="cols wide-left">
+          <div>
+            <canvas id="c4" class="chart"></canvas>
+            <div class="slider-row" style="margin-top:8px"><label class="c-mine">기울기 a</label><input type="range" class="a-slider" min="0" max="30" step="0.1" value="8"><output></output></div>
+            <div class="legend"><span style="color:var(--c-mine)">● 지금 (a, L(a))</span><span style="color:#93c5fd">● 지금까지 찍힌 점</span><span style="color:var(--c-move)">◆ 꼭짓점</span></div>
+          </div>
+          <div>
+            <div class="stat-row">
+              <div class="stat"><small>a</small><span class="big-num c-mine" id="c4a"></span></div>
+              <div class="stat"><small>L(a)</small><span class="big-num c-loss" id="c4l"></span></div>
+            </div>
+            <div class="stat best"><small>🏆 내가 찾은 가장 작은 손실</small><span class="big-num" id="c4best">-</span> <span class="small" id="c4bestA"></span></div>
+            <div class="btn-row" style="margin-top:10px"><button class="btn sm" id="revealCurve">포물선 전체 보기</button><button class="btn sm" id="zoomBtn">🔍 바닥 확대</button><button class="btn sm" id="vertexBtn">◆ 꼭짓점 표시</button><button class="btn sm" id="clearTrail">찍은 점 지우기</button></div>
+            <div class="calc small" style="margin-top:10px">
+              <b>꼭짓점 구하기</b> (선수 학습 5번)<br>
+              L(a) = <span id="lossFormula2" class="mono"></span><br>
+              → 꼭짓점의 a = −(a의 계수) ÷ (2 × a²의 계수)
+            </div>
+          </div>
+        </div>
+        <div class="screen-q" data-fields="그래프에서 찾은 a::슬라이더로 찾은, 손실이 가장 작은 a와 그때의 L(a)는?:: |꼭짓점 공식으로 구한 a::위의 식으로 계산한 꼭짓점의 a는? 그래프에서 찾은 값과 같나요?:: " data-hint="◆ 꼭짓점 표시 버튼으로 내 답을 확인할 수 있어요.|a² 앞의 수와 a 앞의 수를 식에서 찾아 −(a의 계수) ÷ (2 × a²의 계수)에 넣어 보세요.">🎯 미션: 꼭짓점 찾기</div>
+        <div class="box tip" style="margin-top:14px">
+          🤔 이번에는 L(a)의 <b>식을 알아서</b> 꼭짓점을 바로 구했어요. 그런데 실제 인공지능은 식이 너무 복잡해서 이렇게 구할 수 없어요. 그럼 어떻게 할까요? → <b>다음 탭: 경사하강법</b>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2차시 ① 1차시 복습 -->
+  <section class="screen" data-title="1차시 복습" data-key="rev2" data-lesson="2">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div><h2>1차시 복습: 손실함수</h2><p>지난 시간에 배운 것을 짧게 떠올려 봐요.</p></div>
+        <span class="step-time">5분</span>
+      </div>
+      <div class="cols wide-left">
+        <div><canvas id="rv2Chart" class="chart"></canvas></div>
+        <div>
+          <ul class="simple" style="font-size:16px">
+            <li><b>오차</b> = 실제 − 예측</li>
+            <li><b class="c-loss">손실</b> = 오차²의 평균</li>
+            <li>손실은 기울기 a에 대한 함수 <b class="c-loss">L(a)</b></li>
+            <li>자전거 데이터에서는 L(a)가 <b>이차함수</b> → 꼭짓점 공식으로 가장 잘 맞는 직선의 기울기 a ≈ <b id="rv2A"></b></li>
+          </ul>
+          <div class="box tip" style="margin-top:12px">🤔 그런데 L(a)의 <b>식을 모르거나</b>, 이차함수가 아니라 <b>울퉁불퉁한 함수</b>라면 가장 작은 곳을 어떻게 찾을까요? → 오늘 배울 <b>경사하강법</b></div>
+        </div>
+      </div>
+      <div class="screen-q" data-hint="오차, 제곱, 평균이라는 낱말을 넣어 보세요.|손실이 작을수록 무엇이 좋은 건가요?">지난 시간에 배운 손실함수를 한 문장으로 설명해 보세요.</div>
+    </div>
+  </section>
+
+  <!-- 2차시 ② 경사하강법 -->
+  <section class="screen" data-title="경사하강법" data-key="gd" data-lesson="2">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div><h2>경사하강법: 식을 몰라도 바닥 찾기</h2><p>기울기만 보고 손실이 작은 곳(골짜기)을 찾아가는 방법을 배워요. 단계별로 [다음 단계 →]를 눌러 넘어가요.</p></div>
+        <span class="step-time">25분</span>
+      </div>
+      <div class="subnav" data-subnav></div>
+
+      <!-- ① 왜 필요할까? -->
+      <div class="sub" data-sub="왜 필요할까?">
+        <div class="part-h"><span class="no">1</span><div><h3>경사하강법은 왜 필요할까?</h3></div></div>
+        <div class="cols">
+          <ul class="simple">
+            <li>실제 상황에서는 데이터가 <b>매우 많아요.</b> (수천 ~ 수백만 개) 손실 식도 그만큼 길어져요.</li>
+            <li>모든 관계가 <b>직선(일차식)</b>으로 표현되지는 않아요. 곡선 모델을 쓰면 손실함수는 이차함수가 아닌 <b>매우 복잡한 함수</b>가 돼요.</li>
+            <li>그래서 '이차함수' 꼭짓점 공식처럼 <b>한 번에 답을 구할 수 없어요.</b></li>
+            <li>대신 <b>지금 위치의 기울기</b>를 보고 손실이 줄어드는 쪽으로 <b>조금씩</b> 움직여요. 이것이 <b>경사하강법</b>이에요.</li>
+          </ul>
+          <div class="mini-fig">
+            <canvas id="gdWhy"></canvas>
+            <div class="cap-c" id="gdWhyCap"></div>
+            <label class="toggle" style="margin-top:6px"><input type="checkbox" id="gdWhyFog" checked> 🌫️ 안개 (지금 위치 주변만 보기)</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② 기울기로 방향 정하기 -->
+      <div class="sub" data-sub="방향 정하기">
+        <div class="part-h"><span class="no">2</span><div><h3>기울기의 부호로 방향 정하기</h3><p>이제부터는 <b>골짜기가 여러 개인 예시 손실 곡선</b>으로 실험해요. 슬라이더로 공을 움직이며 <span class="c-slope">기울기(접선)</span>와 <span class="c-move">움직일 방향</span>을 보세요.</p></div></div>
+        <div class="cols wide-left">
+          <div>
+            <canvas id="gdDir" class="chart"></canvas>
+            <div class="slider-row" style="margin-top:8px"><label class="c-mine">a</label><input type="range" id="dirA" min="0.2" max="9.8" step="0.1" value="1.8"><output id="dirAo"></output></div>
+          </div>
+          <div>
+            <table class="cmp rule">
+              <tr><th>기울기</th><th>뜻</th><th>움직일 방향</th></tr>
+              <tr><td class="c-neg">− (음수)</td><td>오른쪽이 내리막</td><td>a를 <b>키워요</b> →</td></tr>
+              <tr><td class="c-pos">+ (양수)</td><td>왼쪽이 내리막</td><td>← a를 <b>줄여요</b></td></tr>
+              <tr><td class="c-loss">0</td><td>바닥</td><td>멈춰요</td></tr>
+            </table>
+            <div class="calc" id="dirCalc" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="screen-q" data-fields="a = 1.8일 때::기울기의 부호와 움직일 방향은? :: |a = 4.6일 때::기울기의 부호와 움직일 방향은? :: " data-hint="슬라이더를 1.8과 4.6에 맞추고 보라색 접선이 어느 쪽으로 기울었는지 보세요.|접선이 오른쪽으로 내려가면 기울기는 −예요.">🎯 확인하기</div>
+      </div>
+
+      <!-- ③ 내려가며 실험하기 -->
+      <div class="sub" data-sub="내려가며 실험하기">
+        <div class="part-h"><span class="no">3</span><div><h3>한 걸음씩 내려가며 실험하기</h3><p>[👣 한 걸음]을 눌러 보세요. 다음 위치는 이 식으로 정해요. 그다음 출발 위치와 보폭을 바꿔 가며 실험해요.</p></div></div>
+        <div class="eq" style="margin-bottom:6px;font-size:20px"><span class="c-mine">a<sub>n+1</sub></span> = <span class="c-mine">a<sub>n</sub></span> − <span class="c-move">η</span> × <span class="c-slope">L′(a<sub>n</sub>)</span></div>
+        <div class="small" style="margin-bottom:12px;line-height:1.8"><span class="c-mine">a<sub>n</sub></span>: n번 움직인 뒤의 위치 &nbsp;·&nbsp; <span class="c-move">η</span>(에타): 보폭(학습률) &nbsp;·&nbsp; <span class="c-slope">L′(a<sub>n</sub>)</span>: a<sub>n</sub>에서의 기울기(미분계수)</div>
+        <div class="box key why-minus">
+          <b>🤔 왜 η 앞에 빼기(−)를 붙일까요?</b> 2단계 "방향 정하기"의 규칙을 떠올려 보세요.
+          <table class="cmp" style="margin-top:8px">
+            <tr><th>기울기 L′(a<sub>n</sub>)</th><th>2단계 규칙</th><th>− η × L′(a<sub>n</sub>) <span class="muted" style="font-weight:500">(η = 0.1일 때)</span></th><th>결과</th></tr>
+            <tr><td class="c-neg">− (예: −3)</td><td>오른쪽이 내리막 → a를 키워야 해요</td><td class="mono">−0.1 × (−3) = <b class="c-pos">+0.3</b></td><td>a가 <b>커져요</b> → ✅</td></tr>
+            <tr><td class="c-pos">+ (예: +2)</td><td>왼쪽이 내리막 → a를 줄여야 해요</td><td class="mono">−0.1 × (+2) = <b class="c-neg">−0.2</b></td><td>a가 <b>작아져요</b> ← ✅</td></tr>
+          </table>
+          <p style="margin-top:8px">빼기(−) 덕분에 공은 언제나 <b>기울기와 반대 방향 = 내리막 쪽</b>으로 움직여요. 만약 더하기(+)였다면? 아래 실험 장치의 <b>🙃 스위치</b>로 확인해 보세요.</p>
+        </div>
+        <div data-simslot="2"></div>
+        <div class="calc" id="gdCalc" style="margin-top:12px"></div>
+        <details style="margin-top:10px">
+          <summary class="small" style="cursor:pointer;font-weight:700">📋 걸음마다 기록 보기</summary>
+          <div style="max-height:200px;overflow-y:auto"><table class="err-table" id="gdLog"></table></div>
+        </details>
+        <div class="screen-q" data-hint="[👣 한 걸음]을 천천히 누르며 보라색 접선의 기울어진 정도를 보세요.|골짜기 바닥에 가까울수록 기울기 L′(aₙ)가 0에 가까워져요. 움직이는 거리 = η × L′(aₙ)이니까…">보폭은 그대로인데, 바닥에 가까울수록 한 걸음(주황 화살표)이 짧아져요. 왜 그럴까요?</div>
+
+        <div class="mini-part">
+          <h4><span class="mp-no">🧪</span> 출발 위치와 보폭을 바꾸며 실험하기</h4>
+          <p class="small muted" style="margin:0 0 8px">위의 [출발 위치] 버튼과 보폭 η를 바꾼 뒤 [▶ 자동으로]를 눌러 보세요. 안개를 끄면 골짜기 위치가 보여요.</p>
+        <div class="screen-q" data-table="출발 1.8 · η 0.03|출발 1.8 · η 0.1|출발 1.8 · η 0.3|출발 1.8 · η 0.8|출발 3.4 · η 0.8|출발 5.2 · η 0.1" data-cols="도착한 곳 (a, 손실)|무슨 일이 있었나" data-note="✏️ 실험 결과는 아래 메시지에 나와요 · 활동지에 함께 저장돼요" data-hint="메시지(🏁, 🔁, 💥)와 오른쪽 [걸음마다 손실] 그래프를 함께 보세요.|빨간 점은 손실이 커진 걸음이에요. 출발 3.4 · η 0.8은 출발 때보다 손실이 커지는지 확인해 보세요.">🎯 미션: 출발 위치와 보폭을 바꾸며 실험하기</div>
+        <div class="screen-q" data-fields="보폭이 너무 작으면::어떤 일이 생기나요? :: ::η 0.03처럼 작으면 걸음 수가 어땠나요?~~그리고 가장 가까운 골짜기에 멈췄나요, 더 깊은 골짜기로 갔나요?|보폭이 너무 크면::어떤 일이 생기나요? :: ::η 0.3, 0.8에서 공이 한 골짜기에 멈췄나요?~~[걸음마다 손실] 그래프에서 손실이 오히려 커진 걸음(빨간 점)이 있었나요?|출발 위치가 다르면::어떤 일이 생기나요? :: ::출발 1.8과 5.2에서 η 0.1로 멈춘 골짜기를 비교해 보세요.~~경사하강법은 출발점 근처의 골짜기에 멈추기 쉬워요. 가장 깊은 골짜기에 가려면 어떻게 하면 좋을까요?">🔍 실험에서 발견한 것</div>
+        </div>
+        <div class="box key small" style="margin-top:14px">
+          🤖 실제 인공지능도 이렇게 배워요. 수천억 개의 숫자를 경사하강법으로 조금씩 고쳐 가며 손실을 줄이는 것, 이것을 <b>학습</b>이라고 해요.
+        </div>
+      </div>
+
+      <!-- 3단계의 실험 장치 (3단계가 보일 때 옮겨 붙는다) -->
+      <div id="gdSim" class="cols wide-left">
+        <div>
+          <canvas id="gd" class="chart click"></canvas>
+          <div class="legend">
+            <span style="color:var(--c-mine)">● 지금 위치 (a)</span>
+            <span style="color:var(--c-slope)"><i></i>기울기 (접선)</span>
+            <span style="color:var(--c-move)"><i></i>다음 한 걸음</span>
+            <span style="color:#fdba74">● 지나온 길</span>
+          </div>
+          <div style="margin-top:8px">
+            <label class="toggle"><input type="checkbox" id="fog" checked> 🌫️ 안개 (끄면 골짜기가 보여요)</label>
+            <label class="toggle"><input type="checkbox" id="plusMode"> 🙃 만약 빼기 대신 더하기(+)라면?</label>
+            <span class="small muted">그래프를 클릭하면 출발 위치가 바뀌어요.</span>
+          </div>
+        </div>
+        <div>
+          <div class="btn-row" style="margin-bottom:8px"><span class="small" style="font-weight:700">출발 위치</span><button class="btn sm" data-start="1.8">a = 1.8</button><button class="btn sm" data-start="3.4">a = 3.4</button><button class="btn sm" data-start="5.2">a = 5.2</button><span class="small muted">지금 출발: <b id="gdStart"></b></span></div>
+          <div class="slider-row"><label class="c-move">보폭 η</label><input type="range" id="lr" min="0.01" max="1" step="0.01" value="0.1"><output id="lro"></output></div>
+          <div class="btn-row">
+            <button class="btn primary" id="gdStep">👣 한 걸음</button>
+            <button class="btn" id="gdRun">▶ 자동으로</button>
+            <button class="btn" id="gdReset">↺ 처음으로</button>
+          </div>
+          <div class="stat-row">
+            <div class="stat"><small>걸음 수</small><span class="big-num" id="gdN">0</span></div>
+            <div class="stat"><small>a</small><span class="big-num c-mine" id="gdA"></span></div>
+            <div class="stat"><small>손실</small><span class="big-num c-loss" id="gdL"></span></div>
+          </div>
+          <div class="gd-msg" id="gdMsg"></div>
+          <div class="matrix-label" style="margin-top:8px">걸음마다 손실 <span class="muted" style="font-weight:500">(빨간 점: 손실이 커진 걸음)</span></div><canvas id="gdHist" class="chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2차시 ③ 내 진로와 데이터 -->
+  <section class="screen" data-title="데이터 선정" data-key="data" data-lesson="2">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div><h2>내 진로와 데이터 연결하기</h2><p>1차시 진로 조사를 바탕으로, 3·4차시에 최적화할 <b>나의 데이터</b>를 정해요.</p></div>
+        <span class="step-time">12분</span>
+      </div>
+      <div class="placeholder"><b>📝 내용 준비 중</b>1차시 진로 조사 결과를 보고 선생님이 데이터 수집 양식과 예시 데이터를 준비해요.</div>
+    </div>
+  </section>
+
+  <!-- 2차시 정리·제출 -->
+  <section class="screen" data-title="정리" data-key="sum2l" data-lesson="2">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">✓</div>
+        <div><h2>오늘 배운 것</h2><p>그림 세 장으로 정리하고, 활동지를 제출해요.</p></div>
+        <span class="step-time">8분</span>
+      </div>
+      <div class="sum-grid">
+        <div class="sum-card"><h4>① 방향 정하기</h4><canvas id="s2a"></canvas><p><b>기울기와 반대 방향</b>으로<br>기울기 − 이면 a를 키우고, + 이면 줄여요</p></div>
+        <div class="sum-card"><h4>② 한 걸음씩</h4><canvas id="s2b"></canvas><p><b>a<sub>n+1</sub> = a<sub>n</sub> − <span class="c-move">η</span> × <span class="c-slope">L′(a<sub>n</sub>)</span></b><br>바닥에 가까울수록 걸음이 짧아져요</p></div>
+        <div class="sum-card"><h4>③ 보폭과 출발점</h4><canvas id="s2c"></canvas><p>보폭이 너무 크면 손실이 오히려 커지고,<br>출발점에 따라 도착하는 골짜기가 달라요</p></div>
+      </div>
+      <div class="box key" style="margin-bottom:16px">
+        🤖 <b>인공지능의 학습</b> = 손실이 작아지도록 경사하강법으로 숫자(a)를 조금씩 고쳐 가는 과정
+      </div>
+      <ol class="think">
+        <li data-hint="aₙ₊₁ = aₙ − η × L′(aₙ)에서 빼기(−)가 하는 일은?|기울기가 −일 때와 +일 때 공이 어느 쪽으로 갔나요?">경사하강법의 식에서 η 앞에 빼기(−)를 붙이는 이유를 설명해 보세요.</li>
+        <li data-hint="실험 기록표를 다시 보세요.|너무 작으면 걸음 수가, 너무 크면 손실이 어떻게 됐나요?">보폭이 너무 작을 때와 너무 클 때 각각 어떤 문제가 생기나요? 실험 결과를 근거로 써 보세요.</li>
+      </ol>
+      <div class="box tip small" style="margin-top:16px">
+        📌 <b>다음 시간 예고</b> · 3차시에는 오늘 고른 <b>나의 데이터</b>로 손실을 구하고 경사하강법을 직접 돌려 봐요.
+      </div>
+    </div>
+  </section>
+
+  <!-- 1차시 ④ 나의 진로 -->
+  <section class="screen" data-title="진로·후기" data-key="career" data-lesson="1">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <div><h2>나의 진로와 수업 후기</h2><p>3·4차시에는 오늘 배운 방법으로 <b>내 진로와 관련된 데이터</b>를 직접 최적화해요. 나의 진로를 알려 주고, 오늘 수업 후기를 남겨 주세요.</p></div>
+        <span class="step-time">5분</span>
+      </div>
+      <div class="survey">
+        <label><b>희망 진로 <span class="req-star">*</span></b><span>되고 싶은 직업이나 가고 싶은 학과 (아직 고민 중이면 후보를 여러 개 써도 돼요)</span><input type="text" id="svCareer" maxlength="60" placeholder="예: 간호사, 경영학과, 게임 기획자"></label>
+        <label><b>관심 분야</b><span>가장 가까운 것을 하나 골라 주세요</span>
+          <select id="svField">
+            <option value="">고르기</option>
+            <option>의료·보건·생명</option>
+            <option>공학·IT·컴퓨터</option>
+            <option>자연과학(물리·화학·지구과학)</option>
+            <option>경영·경제·금융</option>
+            <option>사회·교육·심리</option>
+            <option>법·행정·언론</option>
+            <option>예술·디자인·미디어</option>
+            <option>체육·스포츠</option>
+            <option>환경·농업·식품</option>
+            <option>기타</option>
+          </select>
+          <input type="text" id="svFieldEtc" maxlength="40" placeholder="관심 분야를 직접 써 주세요" style="margin-top:6px;display:none"></label>
+        <label><b>좋아하는 과목</b><span>좋아하거나 자신 있는 과목</span><input type="text" id="svSubject" maxlength="40" placeholder="예: 생명과학, 사회문화, 체육"></label>
+        <label><b>수학 자신감</b><span>솔직하게 골라 주세요. 수업 난이도를 맞추는 데만 써요.</span>
+          <select id="svMath">
+            <option value="">고르기</option>
+            <option>1 - 수학이 많이 어려워요</option>
+            <option>2 - 조금 어려워요</option>
+            <option>3 - 보통이에요</option>
+            <option>4 - 자신 있는 편이에요</option>
+            <option>5 - 수학을 좋아하고 잘해요</option>
+          </select></label>
+        <label class="full"><b>데이터로 알아보고 싶은 궁금증</b><span>"○○이 늘어나면 △△은 어떻게 변할까?" 처럼 써 보세요.</span><textarea id="svQuestion" rows="2" maxlength="200" placeholder="예: 잠을 오래 잘수록 집중력이 좋아질까? / 광고비를 늘리면 매출은 얼마나 늘까?"></textarea></label>
+      </div>
+      <h3 style="font-size:17px;margin:22px 0 10px">📝 오늘 수업 후기</h3>
+      <div class="survey">
+        <label><b>체감 난이도</b><span>오늘 수업은 나에게 어땠나요?</span>
+          <select id="svLevel">
+            <option value="">고르기</option>
+            <option>1 - 너무 쉬웠어요</option>
+            <option>2 - 조금 쉬웠어요</option>
+            <option>3 - 딱 알맞았어요</option>
+            <option>4 - 조금 어려웠어요</option>
+            <option>5 - 너무 어려웠어요</option>
+          </select></label>
+        <label><b>가장 어려웠던 부분</b><span>있다면 짧게 써 주세요.</span><input type="text" id="svHard" maxlength="80" placeholder="예: L(a)를 식으로 구하는 부분"></label>
+        <label class="full"><b>후기와 바라는 점</b><span>좋았던 점, 아쉬웠던 점, 앞으로 해 보고 싶은 방향 등을 자유롭게 써 주세요.</span><textarea id="svReview" rows="3" maxlength="400" placeholder="예: 그래프로 손실이 바뀌는 게 보여서 이해가 잘 됐어요. 다음에는 ..."></textarea></label>
+      </div>
+      <p class="small muted" style="margin-top:10px">여기에 쓴 내용은 활동지에 함께 담겨요.</p>
+    </div>
+  </section>
+
+  <!-- 1차시 정리·제출 -->
+  <section class="screen" data-title="정리" data-key="sum1" data-lesson="1">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">✓</div>
+        <div><h2>오늘 배운 것</h2><p>그림 세 장으로 정리하고, 활동지를 제출해요.</p></div>
+        <span class="step-time">7분</span>
+      </div>
+      <div class="sum-grid">
+        <div class="sum-card"><h4>① 오차</h4><canvas id="sum1"></canvas><p><b>오차 = 실제 − 예측</b><br>점과 직선 사이의 차이</p></div>
+        <div class="sum-card"><h4>② 손실</h4><canvas id="sum2"></canvas><p><b class="c-loss">손실 = 오차²의 평균</b><br>손실이 작은 직선(파랑)이 더 잘 맞아요</p></div>
+        <div class="sum-card"><h4>③ 손실함수 L(a)</h4><canvas id="sum3"></canvas><p><b>L(a)는 a에 대한 이차함수</b><br>꼭짓점의 a가 가장 잘 맞는 직선의 기울기</p></div>
+      </div>
+      <div class="box key" style="margin-bottom:16px">
+        🤖 <b>데이터 최적화</b> = 손실 L(a)가 가장 작아지는 a를 찾는 것
+      </div>
+      <div class="box tip small" style="margin-top:16px">
+        📌 <b>다음 시간 예고</b> · L(a)의 식을 모르거나 이차함수가 아니라면 꼭짓점을 어떻게 찾을까요? 2차시에는 <b>경사하강법</b>을 배우고, 여러분의 진로에 맞는 <b>데이터</b>를 골라요. 오늘 쓴 활동지가 탐구 보고서의 첫 장이 돼요.
+      </div>
+    </div>
+  </section>
+
+  <div class="pager">
+    <button class="btn" id="prevBtn">← 이전</button>
+    <span class="count" id="pageCount"></span>
+    <button class="btn primary" id="nextBtn">다음 →</button>
+  </div>
+</main>
+
+<script src="assets/common.js?v=20261023"></script>
+<script>
+(() => {
+  /* ===== 1차시와 2차시는 이 파일 하나로 만든다 =====
+   * lesson2.html → lesson1.html?l=2 로 열린다. data-lesson이 다른 화면은 숨겨 둔다(코드는 그대로 동작).
+   */
+  const LESSON = /[?&]l=2\b/.test(location.search) ? 2 : 1;
+  // 아직 열지 않은 차시면 여기서 멈추고 잠금 안내만 보여 준다 (?preview 나 ?edit 로는 열림)
+  if (!/[?&](preview|edit)/.test(location.search) && !MF.OPEN_LESSONS.includes(LESSON)) {
+    document.querySelector('main').innerHTML = `<div class="step" style="margin:40px 0;text-align:center"><h2 style="font-size:24px">🔒 ${LESSON}차시는 아직 열리지 않았어요</h2><p class="muted" style="margin-top:10px">수업 시간에 선생님이 열어 줄 거예요.</p><p style="margin-top:18px"><a class="btn primary" href="index.html">홈으로</a></p></div>`;
+    return;
+  }
+  document.querySelectorAll('section.screen[data-lesson]').forEach(sc => {
+    if (sc.dataset.lesson !== String(LESSON)) { sc.classList.remove('screen'); sc.classList.add('parked'); }
+  });
+  if (LESSON === 2) {
+    document.title = '2차시 경사하강법과 데이터 선정';
+    document.getElementById('lessonNo').textContent = '2차시';
+    document.getElementById('lessonTitle').textContent = '경사하강법과 데이터 선정';
+    document.getElementById('lessonDate').textContent = '10/30(금)';
+    document.querySelectorAll('.lesson-nav a').forEach(a => a.classList.toggle('on', /lesson2/.test(a.getAttribute('href'))));
+  }
+
+  /* ===== 데이터: 자전거 기록 (탄 시간[시간] → 이동 거리[km]) ===== */
+  const X = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0];
+  const Y = [3.4, 4.1, 6.5, 7.2, 9.6, 10.1, 12.9, 14.6];
+  const N = X.length;
+  const mean = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+  const SXX = mean(X.map(x => x * x)), SXY = mean(X.map((x, i) => x * Y[i])), SYY = mean(Y.map(y => y * y));
+  const loss = a => mean(X.map((x, i) => (Y[i] - a * x) ** 2));
+  const A_BEST = SXY / SXX, L_BEST = loss(A_BEST);
+  const FLAT = Math.round(mean(Y) * 100) / 100; // 엉터리 직선: 항상 평균 거리
+  const MJ = 12, SY = 17;
+  const H = 0.01; // 기울기를 잴 때 a를 움직여 보는 양
+  const slopeAt = a => (loss(a + H) - loss(a)) / H;
+
+  const COL = { real: '#1e3a8a', pos: '#e11d48', neg: '#0891b2', mj: '#f59e0b', sy: '#8b5cf6', mine: '#2563eb', flat: '#64748b', loss: '#0e9f9a', slope: '#7c3aed', move: '#ea580c', trail: '#fdba74' };
+  const f2 = v => (Math.round(v * 100) / 100).toFixed(2);
+  const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  const sg = v => (v > 0.004 ? '+' : v < -0.004 ? '−' : '') + f2(Math.abs(v));
+  const par = v => (v < -0.004 ? `(${sg(v)})` : sg(v));
+  const lossLabel = v => v >= 1000 ? Math.round(v).toLocaleString() : f2(v);
+  const pred = (m, x) => (m.flat != null ? m.flat : m.a * x);
+  const errs = m => X.map((x, i) => Y[i] - pred(m, x));
+  const NUM = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
+
+  /* ===== 그래프 그리기 도우미 ===== */
+  const W = 520, HT = 340, P = { l: 52, r: 16, t: 14, b: 46 };
+  const prep = (cv, w, h, dpr = 2) => {
+    cv.width = w * dpr; cv.height = h * dpr;
+    const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); return x;
+  };
+  const frame = (x, w, h, xr, yr, xt, yt, xl, yl, pad = P) => {
+    const px = v => pad.l + (v - xr[0]) / (xr[1] - xr[0]) * (w - pad.l - pad.r);
+    const py = v => h - pad.b - (v - yr[0]) / (yr[1] - yr[0]) * (h - pad.t - pad.b);
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+    x.strokeStyle = '#eef0f6'; x.lineWidth = 1; x.font = '12px Pretendard, sans-serif'; x.fillStyle = '#6b6880';
+    xt.forEach(v => { x.beginPath(); x.moveTo(px(v), py(yr[0])); x.lineTo(px(v), py(yr[1])); x.stroke(); x.textAlign = 'center'; x.fillText(v, px(v), h - pad.b + 16); });
+    yt.forEach(v => { x.beginPath(); x.moveTo(px(xr[0]), py(v)); x.lineTo(px(xr[1]), py(v)); x.stroke(); x.textAlign = 'right'; x.fillText(v, pad.l - 6, py(v) + 4); });
+    x.strokeStyle = '#9b97ad'; x.beginPath(); x.moveTo(px(xr[0]), py(yr[1])); x.lineTo(px(xr[0]), py(yr[0])); x.lineTo(px(xr[1]), py(yr[0])); x.stroke();
+    x.fillStyle = '#4b4860'; x.font = '600 13px Pretendard, sans-serif'; x.textAlign = 'center';
+    if (xl) x.fillText(xl, (pad.l + w - pad.r) / 2, h - 8);
+    if (yl) { x.save(); x.translate(14, (pad.t + h - pad.b) / 2); x.rotate(-Math.PI / 2); x.fillText(yl, 0, 0); x.restore(); }
+    return { px, py, clip: () => { x.save(); x.beginPath(); x.rect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b); x.clip(); } };
+  };
+  const arrow = (x, x0, y0, x1, y1, color, width = 3) => {
+    const ang = Math.atan2(y1 - y0, x1 - x0), L = Math.hypot(x1 - x0, y1 - y0), hd = Math.min(11, L * 0.6);
+    x.strokeStyle = color; x.fillStyle = color; x.lineWidth = width;
+    x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1 - Math.cos(ang) * hd * 0.6, y1 - Math.sin(ang) * hd * 0.6); x.stroke();
+    x.beginPath(); x.moveTo(x1, y1); x.lineTo(x1 - hd * Math.cos(ang - 0.45), y1 - hd * Math.sin(ang - 0.45)); x.lineTo(x1 - hd * Math.cos(ang + 0.45), y1 - hd * Math.sin(ang + 0.45)); x.closePath(); x.fill();
+  };
+  const label = (x, text, tx, ty, color, align = 'left', font = '700 12.5px Pretendard, sans-serif') => {
+    x.font = font; x.textAlign = align; x.lineWidth = 3.5; x.strokeStyle = '#fff'; x.strokeText(text, tx, ty); x.fillStyle = color; x.fillText(text, tx, ty);
+  };
+
+  /* 데이터 그래프
+   * lines: [{m, color, dash, name}] · err: 오차를 그릴 직선 m · sq: 오차² 정사각형 · nums: 점 번호 · sel: 자세히 볼 점 번호
+   */
+  const XR = [0, 1.1], YR = [0, 18];
+  const drawData = (cv, { lines = [], err = null, sq = false, nums = false, sel = -1, w = W, h = HT, dpr = 2, small = false } = {}) => {
+    const x = prep(cv, w, h, dpr);
+    const pad = small ? { l: 34, r: 10, t: 10, b: 30 } : P;
+    const g = frame(x, w, h, XR, YR, small ? [0, 0.5, 1.0] : [0, 0.2, 0.4, 0.6, 0.8, 1.0], small ? [0, 6, 12, 18] : [0, 3, 6, 9, 12, 15, 18], small ? '' : '탄 시간 (시간)', small ? '' : '이동 거리 (km)', pad);
+    const { px, py } = g;
+    g.clip();
+    if (err && sq) X.forEach((xv, i) => {
+      const y0 = py(Y[i]), y1 = py(pred(err, xv)), s = Math.abs(y1 - y0);
+      x.fillStyle = 'rgba(225,29,72,.14)'; x.strokeStyle = 'rgba(225,29,72,.5)'; x.lineWidth = 1;
+      x.fillRect(px(xv), Math.min(y0, y1), s, s); x.strokeRect(px(xv), Math.min(y0, y1), s, s);
+    });
+    lines.forEach(L => {
+      x.setLineDash(L.dash ? [7, 5] : []); x.strokeStyle = L.color; x.lineWidth = L.width || 3;
+      x.beginPath(); x.moveTo(px(0), py(pred(L.m, 0))); x.lineTo(px(XR[1]), py(pred(L.m, XR[1]))); x.stroke(); x.setLineDash([]);
+    });
+    if (err) X.forEach((xv, i) => {
+      const e = Y[i] - pred(err, xv);
+      x.strokeStyle = e >= 0 ? COL.pos : COL.neg; x.lineWidth = i === sel ? 4 : 2.5;
+      x.beginPath(); x.moveTo(px(xv), py(Y[i])); x.lineTo(px(xv), py(pred(err, xv))); x.stroke();
+    });
+    x.restore();
+    lines.forEach(L => { if (!L.name) return;
+      const ex = L.m.flat != null ? 1.02 : Math.min(1.04, (YR[1] - 1) / L.m.a), ey = pred(L.m, ex);
+      label(x, L.name, px(ex) - 4, py(ey) - 8, L.color, 'right');
+    });
+    X.forEach((xv, i) => {
+      x.fillStyle = COL.real; x.beginPath(); x.arc(px(xv), py(Y[i]), small ? 4 : 5.5, 0, Math.PI * 2); x.fill();
+      x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke();
+      if (nums) label(x, NUM[i], px(xv) + 7, py(Y[i]) - 7, i === sel ? COL.move : COL.real, 'left', '700 13px Pretendard, sans-serif');
+    });
+    if (err && sel >= 0) { // 고른 점: 예측 위치(빈 원)와 값 표시
+      const xv = X[sel], p = pred(err, xv), e = Y[sel] - p, c = e >= 0 ? COL.pos : COL.neg;
+      x.strokeStyle = COL.real; x.lineWidth = 2; x.beginPath(); x.arc(px(xv), py(Y[sel]), 10, 0, Math.PI * 2); x.stroke();
+      x.fillStyle = '#fff'; x.strokeStyle = lines[0] ? lines[0].color : '#000'; x.lineWidth = 2.5;
+      x.beginPath(); x.arc(px(xv), py(p), 6, 0, Math.PI * 2); x.fill(); x.stroke();
+    }
+    return g;
+  };
+  const nearestPoint = (cv, e) => {
+    const r = cv.getBoundingClientRect(), mx = (e.clientX - r.left) * W / r.width;
+    const px = v => P.l + v / XR[1] * (W - P.l - P.r);
+    let best = 0; X.forEach((xv, i) => { if (Math.abs(px(xv) - mx) < Math.abs(px(X[best]) - mx)) best = i; });
+    return best;
+  };
+
+  /* 오차 막대 그래프: 그냥(위아래) 또는 제곱(모두 위) */
+  const drawBars = (cv, es, mode, scale) => {
+    const w = 400, h = 150, x = prep(cv, w, h), l = 30, r = 10, top = 16, bot = 22;
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+    const bw = (w - l - r) / N;
+    const zero = mode === 'raw' ? top + (h - top - bot) / 2 : h - bot;
+    const unit = mode === 'raw' ? (h - top - bot) / 2 / scale : (h - top - bot) / scale;
+    x.strokeStyle = '#9b97ad'; x.lineWidth = 1; x.beginPath(); x.moveTo(l, zero); x.lineTo(w - r, zero); x.stroke();
+    x.fillStyle = '#6b6880'; x.font = '11px Pretendard, sans-serif'; x.textAlign = 'right'; x.fillText('0', l - 5, zero + 4);
+    es.forEach((e, i) => {
+      const v = mode === 'raw' ? e : e * e, hh = Math.min(Math.abs(v) * unit, zero - top + (mode === 'raw' ? 0 : 0));
+      const cx = l + bw * i + bw * 0.18, bwid = bw * 0.64;
+      x.fillStyle = mode === 'sq' ? 'rgba(225,29,72,.75)' : e >= 0 ? COL.pos : COL.neg;
+      if (v >= 0) x.fillRect(cx, zero - hh, bwid, hh); else x.fillRect(cx, zero, bwid, hh);
+      x.fillStyle = '#4b4860'; x.font = '600 10.5px Pretendard, sans-serif'; x.textAlign = 'center';
+      x.fillText(mode === 'raw' ? sg(e).replace('.00', '') : f1(v), cx + bwid / 2, v >= 0 ? zero - hh - 4 : zero + hh + 11);
+      x.fillStyle = COL.real; x.font = '700 11px Pretendard, sans-serif'; x.fillText(NUM[i], cx + bwid / 2, h - 5);
+    });
+  };
+
+  /* 손실 그래프: a → 손실 */
+  const AR = [0, 30], LR = [0, 100];
+  const ZOOM = { ar: [11, 19], lr: [0, 3], xt: [11, 12, 13, 14, 15, 16, 17, 18, 19], yt: [0, 0.5, 1, 1.5, 2, 2.5, 3] };
+  const drawLoss = (cv, { curve = true, dots = [], ball = null, marks = [], zoom = false, w = W, h = HT, dpr = 2 } = {}) => {
+    const x = prep(cv, w, h, dpr);
+    const ar = zoom ? ZOOM.ar : AR;
+    const g = zoom ? frame(x, w, h, ZOOM.ar, ZOOM.lr, ZOOM.xt, ZOOM.yt, '기울기 a (바닥 확대)', '손실')
+      : frame(x, w, h, AR, LR, [0, 5, 10, 15, 20, 25, 30], [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], '기울기 a', '손실');
+    const { px, py } = g;
+    g.clip();
+    if (curve) { x.strokeStyle = '#94a3b8'; x.lineWidth = 2.5; x.beginPath(); for (let k = 0; k <= 300; k++) { const a = ar[0] + (ar[1] - ar[0]) * k / 300; k ? x.lineTo(px(a), py(loss(a))) : x.moveTo(px(a), py(loss(a))); } x.stroke(); }
+    dots.forEach(a => { x.fillStyle = '#93c5fd'; x.beginPath(); x.arc(px(a), py(loss(a)), 3.5, 0, Math.PI * 2); x.fill(); });
+    marks.forEach(m => { const X0 = px(m.a), Y0 = py(loss(m.a)); x.fillStyle = m.color; x.beginPath(); x.moveTo(X0, Y0 - 8); x.lineTo(X0 + 7, Y0); x.lineTo(X0, Y0 + 8); x.lineTo(X0 - 7, Y0); x.closePath(); x.fill(); });
+    if (ball != null) {
+      x.setLineDash([4, 4]); x.strokeStyle = 'rgba(37,99,235,.5)'; x.lineWidth = 1.5;
+      x.beginPath(); x.moveTo(px(ball), py(loss(ball))); x.lineTo(px(ball), py(0)); x.stroke();
+      x.beginPath(); x.moveTo(px(ball), py(loss(ball))); x.lineTo(px(0), py(loss(ball))); x.stroke(); x.setLineDash([]);
+      x.fillStyle = COL.mine; x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(px(ball), py(loss(ball)), 8, 0, Math.PI * 2); x.fill(); x.stroke();
+    }
+    x.restore();
+    marks.forEach(m => label(x, m.name, px(m.a) - 12, py(loss(m.a)) - 14, m.color, 'right'));
+    if (ball != null) label(x, `손실 ${lossLabel(loss(ball))}`, px(ball) + 12, Math.max(28, py(loss(ball)) - 10), COL.loss);
+    return g;
+  };
+  const toPlot = (cv, e, xr, yr) => {
+    const r = cv.getBoundingClientRect();
+    const mx = (e.clientX - r.left) * W / r.width, my = (e.clientY - r.top) * HT / r.height;
+    return [xr[0] + (mx - P.l) / (W - P.l - P.r) * (xr[1] - xr[0]), yr[0] + (HT - P.b - my) / (HT - P.t - P.b) * (yr[1] - yr[0])];
+  };
+  const clampA = a => Math.max(0, Math.min(30, Math.round(a * 10) / 10));
+
+  const store = (() => { try { return JSON.parse(localStorage.getItem('do-l1v2')) || {}; } catch (e) { return {}; } })();
+  const persist = () => { try { localStorage.setItem('do-l1v2', JSON.stringify(store)); } catch (e) {} };
+  const renderers = {};
+
+  /* ===== 1. 선수 학습 확인 =====
+   * 한 문제씩: 확인 질문 → [확인] 또는 [모르겠어요] → 쉬운 설명(그림, 다른 숫자의 예시)이 열린다.
+   * 첫 답과 마지막 상태를 함께 저장해서 활동지에 담는다.
+   */
+  const SW = 360, SH = 220, SP = { l: 34, r: 12, t: 12, b: 38 };
+  const smallFrame = (cv, xr, yr, xt, yt, xl, yl) => { const x = prep(cv, SW, SH); return { x, ...frame(x, SW, SH, xr, yr, xt, yt, xl, yl, SP) }; };
+  const dot = (x, X0, Y0, r, c) => { x.fillStyle = c; x.beginPath(); x.arc(X0, Y0, r, 0, Math.PI * 2); x.fill(); };
+  const dash = (x, x0, y0, x1, y1, c) => { x.setLineDash([4, 4]); x.strokeStyle = c; x.lineWidth = 1.5; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); x.setLineDash([]); };
+  const curve = (x, px, py, f, a, b, c, wdt = 2.5) => { x.strokeStyle = c; x.lineWidth = wdt; x.beginPath(); for (let k = 0; k <= 200; k++) { const t = a + (b - a) * k / 200; k ? x.lineTo(px(t), py(f(t))) : x.moveTo(px(t), py(f(t))); } x.stroke(); };
+  const inPlot = (x, fn) => { x.save(); x.beginPath(); x.rect(SP.l, SP.t, SW - SP.l - SP.r, SH - SP.t - SP.b); x.clip(); fn(); x.restore(); };
+  const sgn = v => String(v).replace('-', '−');
+  // 직선 위 두 점 사이의 계단 (x 변화, y 변화)
+  const stair = (x, px, py, x0, y0, x1, y1) => {
+    arrow(x, px(x0), py(y0), px(x1), py(y0), COL.move, 2.5); label(x, `x ${x1 - x0 > 0 ? '+' : ''}${sgn(x1 - x0)}`, (px(x0) + px(x1)) / 2, py(y0) + (y1 > y0 ? 16 : -8), COL.move, 'center');
+    arrow(x, px(x1), py(y0), px(x1), py(y1), y1 >= y0 ? COL.pos : COL.neg, 2.5); label(x, `y ${y1 - y0 > 0 ? '+' : ''}${sgn(MF.round(y1 - y0, 2))}`, px(x1) + 7, (py(y0) + py(y1)) / 2 + 4, y1 >= y0 ? COL.pos : COL.neg, 'left');
+  };
+  // 자료를 점으로 찍고, 단계에 따라 평균선(1) → 편차 막대(2) → 편차²(3) → 표준편차 띠(4)를 더한다
+  const devPlot = (cv, data, { mean: showMean = true, dev = true, sq = true, band = true } = {}) => {
+    const m = mean(data), sd = Math.sqrt(mean(data.map(v => (v - m) ** 2)));
+    const w = SW, h = 240, x = prep(cv, w, h), l = 40, r = 76, top = 14, base = h - 14;
+    const max = Math.ceil(Math.max(...data)) + 1, py = v => base - v / max * (base - top), bw = (w - l - r) / data.length;
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+    if (band) { x.fillStyle = 'rgba(14,159,154,.12)'; x.fillRect(l, py(m + sd), w - r - l, py(m - sd) - py(m + sd)); label(x, `평균 ± ${MF.round(sd, 2)}`, w - r + 8, py(m - sd) + 4, COL.loss, 'left', '700 11.5px Pretendard, sans-serif'); }
+    // 세로축 (값)
+    x.strokeStyle = '#eef0f6'; x.lineWidth = 1;
+    for (let v = 0; v <= max; v++) { x.beginPath(); x.moveTo(l, py(v)); x.lineTo(w - r, py(v)); x.stroke(); }
+    x.strokeStyle = '#9b97ad'; x.beginPath(); x.moveTo(l, py(max)); x.lineTo(l, py(0)); x.stroke();
+    x.fillStyle = '#6b6880'; x.font = '11px Pretendard, sans-serif'; x.textAlign = 'right';
+    for (let v = 0; v <= max; v++) x.fillText(v, l - 6, py(v) + 4);
+    label(x, '값', l - 6, top - 2 + 10, '#4b4860', 'right', '700 11px Pretendard, sans-serif');
+    if (showMean || dev) { dash(x, l, py(m), w - r + 6, py(m), COL.loss); label(x, `평균 ${MF.round(m, 2)}`, w - r + 8, py(m) + 4, COL.loss, 'left', '800 12.5px Pretendard, sans-serif'); }
+    data.forEach((v, i) => {
+      const cx = l + bw * (i + 0.5), d = v - m;
+      if (dev && d) {
+        x.strokeStyle = d >= 0 ? COL.pos : COL.neg; x.lineWidth = 4; x.beginPath(); x.moveTo(cx, py(m)); x.lineTo(cx, py(v)); x.stroke();
+        label(x, (d > 0 ? '+' : '') + sgn(MF.round(d, 2)) + (sq ? ` → ${MF.round(d * d, 2)}` : ''), cx + 8, (py(m) + py(v)) / 2 + 4, d >= 0 ? COL.pos : COL.neg, 'left', '800 11.5px Pretendard, sans-serif');
+      }
+      dot(x, cx, py(v), 6, COL.real); label(x, String(v), cx - 9, py(v) - 6, COL.real, 'right', '800 12px Pretendard, sans-serif');
+    });
+  };
+
+  const GROUPS = { lin: '일차함수', quad: '이차함수', stat: '평균·분산', diff: '미분계수' };
+  const PRE = [
+    /* --- 일차함수 --- */
+    {
+      id: 'lin1', g: 'lin', title: '기울기의 뜻', use: '직선 "거리 = a × 시간"의 a',
+      q: '<span class="mono">y = 3x + 1</span> 에서 x가 <b>2만큼</b> 늘어나면, y는 얼마만큼 늘어날까요?', type: 'num', answer: 6,
+      ex: `<div class="ex-grid"><div><canvas data-ex></canvas>
+          <div class="slider-row" style="margin-top:8px"><label>기울기 a</label><input type="range" min="0.5" max="4" step="0.5" value="2" data-a><output data-ao></output></div></div><div>
+        <p><b>기울기 a = x가 1 늘어날 때 y가 늘어나는 양</b>이에요. 그래서 x가 2 늘면 y는 <b>a × 2</b>만큼 늘어요.</p>
+        <p>예시: <span class="mono">y = 4x − 2</span>에서 x가 2 늘면 y는 4 × 2 = <b>8</b> 늘어요.</p>
+        <p>뒤에 붙은 상수(−2, +1 같은 수)는 직선을 <b>위아래로 옮길 뿐</b>, 늘어나는 양과는 상관없어요. 슬라이더로 a를 바꿔 계단의 높이를 보세요.</p></div></div>`,
+      exInit: el => {
+        const s = el.querySelector('[data-a]');
+        const draw = () => {
+          const a = +s.value; el.querySelector('[data-ao]').textContent = a;
+          const { x, px, py } = smallFrame(el.querySelector('[data-ex]'), [0, 5], [0, 20], [0, 1, 2, 3, 4, 5], [0, 5, 10, 15, 20], 'x', '');
+          inPlot(x, () => curve(x, px, py, t => a * t + 1, 0, 5, COL.mine, 3));
+          stair(x, px, py, 1, a + 1, 3, 3 * a + 1);
+          label(x, `y = ${a}x + 1`, SP.l + 8, SP.t + 14, COL.mine, 'left', '800 13px Pretendard, sans-serif');
+        };
+        s.addEventListener('input', draw); draw();
+      }
+    },
+    {
+      id: 'lin2', g: 'lin', title: '그래프에서 기울기 구하기', use: '경사하강법에서 쓰는 "기울기"',
+      q: '오른쪽 그래프의 직선은 두 점 <span class="mono">(0, 1)</span>, <span class="mono">(2, 7)</span>을 지나요. 이 직선의 기울기는 얼마일까요?', type: 'num', answer: 3,
+      qDraw: cv => {
+        const { x, px, py } = smallFrame(cv, [0, 4], [0, 14], [0, 1, 2, 3, 4], [0, 2, 4, 6, 8, 10, 12, 14], 'x', '');
+        inPlot(x, () => curve(x, px, py, t => 3 * t + 1, 0, 4, COL.slope, 3));
+        dot(x, px(0), py(1), 5, COL.real); dot(x, px(2), py(7), 5, COL.real);
+        label(x, '(0, 1)', px(0) + 8, py(1) + 4, COL.real, 'left'); label(x, '(2, 7)', px(2) - 8, py(7) - 4, COL.real, 'right');
+      },
+      ex: `<div class="ex-grid"><canvas data-ex></canvas><div>
+        <p><b>기울기 = y의 변화량 ÷ x의 변화량</b></p>
+        <p>예시: 두 점 <span class="mono">(1, 2)</span>, <span class="mono">(3, 6)</span>을 지나는 직선<br>
+        x: 1 → 3 이니까 <span class="c-move">+2</span>, y: 2 → 6 이니까 <span class="c-pos">+4</span><br>
+        기울기 = <span class="c-pos">4</span> ÷ <span class="c-move">2</span> = <b>2</b></p>
+        <p>그림처럼 두 점 사이에 <b>계단</b>을 그려 보면 쉬워요.</p></div></div>`,
+      exInit: el => {
+        const { x, px, py } = smallFrame(el.querySelector('[data-ex]'), [0, 4], [0, 10], [0, 1, 2, 3, 4], [0, 2, 4, 6, 8, 10], 'x', '');
+        inPlot(x, () => curve(x, px, py, t => 2 * t, 0, 4, COL.slope, 3));
+        stair(x, px, py, 1, 2, 3, 6);
+        dot(x, px(1), py(2), 5, COL.real); dot(x, px(3), py(6), 5, COL.real);
+        label(x, '(1, 2)', px(1) - 8, py(2) + 4, COL.real, 'right'); label(x, '(3, 6)', px(3) - 8, py(6) - 6, COL.real, 'right');
+      }
+    },
+    {
+      id: 'lin3', g: 'lin', title: '기울기의 부호', use: '내리막인지 오르막인지 판단하기',
+      q: '<span class="mono">y = −2x + 5</span> 의 그래프는 어떤 모양일까요?', type: 'choice',
+      choices: ['오른쪽 위로 올라가는 직선', '오른쪽 아래로 내려가는 직선', '수평인 직선', '∪ 모양 곡선'], answer: '오른쪽 아래로 내려가는 직선',
+      ex: `<div class="ex-grid"><div><canvas data-ex></canvas>
+          <div class="slider-row" style="margin-top:8px"><label>기울기 a</label><input type="range" min="-3" max="3" step="0.5" value="1" data-a><output data-ao></output></div></div><div>
+        <p>슬라이더로 기울기 a를 <b>양수 → 0 → 음수</b>로 바꿔 보세요.</p>
+        <p>a <b>&gt; 0</b>: 오른쪽으로 갈수록 <span class="c-pos">올라가요 (오르막)</span><br>
+        a <b>= 0</b>: 수평이에요 (평지)<br>
+        a <b>&lt; 0</b>: 오른쪽으로 갈수록 <span class="c-neg">내려가요 (내리막)</span></p>
+        <p>⛰️ 경사하강법은 이 부호를 보고 <b>내리막 쪽</b>으로 움직여요.</p></div></div>`,
+      exInit: el => {
+        const s = el.querySelector('[data-a]');
+        const draw = () => {
+          const a = +s.value; el.querySelector('[data-ao]').textContent = sgn(a);
+          const { x, px, py } = smallFrame(el.querySelector('[data-ex]'), [0, 4], [0, 12], [0, 1, 2, 3, 4], [0, 3, 6, 9, 12], 'x', '');
+          const c = a > 0 ? COL.pos : a < 0 ? COL.neg : COL.flat;
+          inPlot(x, () => curve(x, px, py, t => a * (t - 2) + 6, 0, 4, c, 3));
+          label(x, `y = ${sgn(a)}x + …  ${a > 0 ? '↗ 오르막' : a < 0 ? '↘ 내리막' : '→ 평지'}`, SP.l + 8, SP.t + 14, c, 'left', '800 13.5px Pretendard, sans-serif');
+        };
+        s.addEventListener('input', draw); draw();
+      }
+    },
+    /* --- 이차함수 --- */
+    {
+      id: 'quad1', g: 'quad', title: '꼭짓점과 최솟값', use: '손실 그래프의 바닥',
+      q: '<span class="mono">y = (x − 2)² + 5</span> 의 <b>최솟값</b>(가장 작은 y)은 얼마일까요?', type: 'num', answer: 5,
+      ex: `<div class="ex-grid"><div><canvas data-ex></canvas>
+          <div class="slider-row" style="margin-top:8px"><label>x</label><input type="range" min="0" max="6" step="0.5" value="0.5" data-x><output data-xo></output></div></div><div>
+        <p>예시: <span class="mono">y = (x − 3)² + 1</span></p>
+        <p>(x − 3)²은 제곱이라 <b>0 이상</b>이에요. 0이 되는 x = 3일 때 y가 가장 작고, 그때 y = 0 + 1 = <b>1</b>이 최솟값이에요.</p>
+        <p>그래프는 <b>∪ 모양</b>이고, 맨 아래 점 <b>(3, 1)</b>이 꼭짓점이에요. 공을 움직여 확인해 보세요.</p></div></div>`,
+      exInit: el => {
+        const s = el.querySelector('[data-x]'), f = t => (t - 3) ** 2 + 1;
+        const draw = () => {
+          const v = +s.value; el.querySelector('[data-xo]').textContent = v;
+          const { x, px, py } = smallFrame(el.querySelector('[data-ex]'), [0, 6], [0, 11], [0, 1, 2, 3, 4, 5, 6], [0, 2, 4, 6, 8, 10], 'x', '');
+          inPlot(x, () => curve(x, px, py, f, 0, 6, '#94a3b8', 3));
+          dash(x, px(v), py(f(v)), px(v), py(0), COL.mine);
+          dot(x, px(3), py(1), 4, COL.loss); label(x, '꼭짓점 (3, 1)', px(3), py(1) + 16, COL.loss, 'center');
+          dot(x, px(v), py(f(v)), 7, COL.mine); label(x, `y = ${f(v)}`, px(v) + 10, py(f(v)) - 6, COL.mine, 'left', '800 13px Pretendard, sans-serif');
+        };
+        s.addEventListener('input', draw); draw();
+      }
+    },
+    {
+      id: 'quad2', g: 'quad', title: '완전제곱식으로 꼭짓점 찾기', use: '손실 L(a)가 가장 작아지는 a',
+      q: '<span class="mono">y = x² − 6x + 11</span> 은 x가 얼마일 때 가장 작아질까요?', type: 'num', answer: 3,
+      ex: `<p>예시: <span class="mono">y = x² − 4x + 7</span></p>
+        <p>x² − 4x를 <b>(x − □)²</b> 꼴로 만들려면, x의 계수 −4의 절반인 −2를 써서 (x − 2)² = x² − 4x + <b>4</b>를 만들어요.</p>
+        <div class="eq" style="font-size:15px">y = x² − 4x + 7 = (x² − 4x + 4) + 3 = <b>(x − 2)² + 3</b></div>
+        <p style="margin-top:8px">그래서 <b>x = 2</b>일 때 가장 작고, 최솟값은 3이에요.</p>
+        <p>💡 지름길: y = x² + bx + c 는 <b>x = −b ÷ 2</b>에서 가장 작아요. (예시: −(−4) ÷ 2 = 2)</p>`
+    },
+    {
+      id: 'quad3', g: 'quad', title: '꼭짓점 왼쪽과 오른쪽', use: '경사하강법이 움직이는 방향',
+      q: '<span class="mono">y = (x − 3)²</span> 에서 x가 0에서 3까지 커질 때, y는 어떻게 변할까요?', type: 'choice',
+      choices: ['계속 커진다', '계속 작아진다', '변하지 않는다'], answer: '계속 작아진다',
+      ex: `<div class="ex-grid"><div><canvas data-ex></canvas>
+          <div class="slider-row" style="margin-top:8px"><label>x</label><input type="range" min="0" max="6" step="0.5" value="0" data-x><output data-xo></output></div></div><div>
+        <p><span class="mono">y = (x − 3)²</span>의 그래프예요. 공을 x = 0에서 3까지 움직이며 <b>y 값</b>과 접선(보라색)의 기울어진 방향을 보세요.</p>
+        <p>꼭짓점 <b>왼쪽</b>: x가 커지면 y가 <span class="c-neg">작아져요</span> → 기울기 <b>−</b> (내리막)<br>
+        꼭짓점 <b>오른쪽</b>: x가 커지면 y가 <span class="c-pos">커져요</span> → 기울기 <b>+</b> (오르막)<br>
+        꼭짓점: 기울기 <b>0</b> (바닥)</p>
+        <p>⛰️ 그래서 기울기가 −면 오른쪽으로, +면 왼쪽으로 가야 바닥에 가까워져요.</p></div></div>`,
+      exInit: el => {
+        const s = el.querySelector('[data-x]'), f = t => (t - 3) ** 2;
+        const draw = () => {
+          const v = +s.value, sl = 2 * (v - 3); el.querySelector('[data-xo]').textContent = v;
+          const { x, px, py } = smallFrame(el.querySelector('[data-ex]'), [0, 6], [0, 10], [0, 1, 2, 3, 4, 5, 6], [0, 2, 4, 6, 8, 10], 'x', '');
+          inPlot(x, () => { curve(x, px, py, f, 0, 6, '#94a3b8', 3); curve(x, px, py, t => f(v) + sl * (t - v), v - 0.9, v + 0.9, COL.slope, 3); });
+          dot(x, px(3), py(0), 4, COL.loss);
+          dot(x, px(v), py(f(v)), 7, COL.mine); label(x, `y = ${f(v)}`, px(v) + (v < 3 ? 10 : -10), py(f(v)) + 4, COL.mine, v < 3 ? 'left' : 'right', '800 12.5px Pretendard, sans-serif');
+          label(x, `기울기 ${sl > 0 ? '+' : ''}${sgn(sl)} ${sl < 0 ? '(내리막)' : sl > 0 ? '(오르막)' : '(바닥)'}`, SP.l + 8, SP.t + 14, sl < 0 ? COL.neg : sl > 0 ? COL.pos : COL.loss, 'left', '800 13px Pretendard, sans-serif');
+        };
+        s.addEventListener('input', draw); draw();
+      }
+    },
+    /* --- 평균·편차·분산 (한 화면에서 차례로) --- */
+    {
+      id: 'stat', g: 'stat', title: '평균 · 편차 · 분산 · 표준편차', use: '손실 = 오차²의 평균 (분산과 같은 생각)', type: 'multi', data: [2, 4, 5, 6, 8],
+      steps: [
+        { id: 'stat_mean', title: '평균',
+          intro: '<b>평균 = 모두 더한 값 ÷ 개수</b> · 자료의 한가운데(균형점)를 나타내요.',
+          q: '자료 <span class="mono">2, 4, 5, 6, 8</span> 의 평균은 얼마일까요?', answer: 5,
+          hint: '다섯 값을 모두 더하면 2 + 4 + 5 + 6 + 8 = 25예요. 이것을 개수로 나눠요.',
+          sol: '(2 + 4 + 5 + 6 + 8) ÷ 5 = 25 ÷ 5 = <b>5</b>' },
+        { id: 'stat_dev', title: '편차와 편차의 합',
+          intro: '<b>편차 = 값 − 평균</b> · 각 값이 평균에서 얼마나 떨어져 있는지예요. 그림의 막대처럼 평균보다 크면 <span class="c-pos">+</span>, 작으면 <span class="c-neg">−</span>예요.',
+          q: '다섯 값의 편차를 <b>모두 더하면</b> 얼마일까요?', answer: 0,
+          hint: '그림에 편차 막대와 숫자가 나타났어요. 막대 옆 숫자를 모두 더해 보세요.',
+          sol: '편차는 <span class="c-neg">−3</span>, <span class="c-neg">−1</span>, 0, <span class="c-pos">+1</span>, <span class="c-pos">+3</span> → 합 = <b>0</b>. 평균은 균형점이라 편차의 합은 <b>항상 0</b>이에요.' },
+        { id: 'stat_var', title: '분산',
+          intro: '편차의 합은 항상 0이라 "얼마나 퍼져 있는지"를 나타낼 수 없어요. 그래서 <b>편차를 제곱해서 평균</b>을 내요. 이것이 <b>분산</b>이에요.<br><b>분산 = (편차²의 합) ÷ 개수</b>',
+          q: '이 자료의 <b>분산</b>은 얼마일까요?', answer: 4,
+          hint: '그림에 편차² (→ 뒤의 숫자)가 나타났어요. 모두 더해서 개수 5로 나눠요.',
+          sol: '편차² = 9, 1, 0, 1, 9 → (9 + 1 + 0 + 1 + 9) ÷ 5 = 20 ÷ 5 = <b>4</b>' },
+        { id: 'stat_sd', title: '표준편차',
+          intro: '분산은 제곱했기 때문에 단위도 제곱이 돼요(점², cm²). 원래 단위로 되돌리려고 <b>제곱근</b>을 씌워요. 이것이 <b>표준편차</b>예요.<br><b>표준편차 = √분산</b>',
+          q: '이 자료의 <b>표준편차</b>는 얼마일까요?', answer: 2,
+          hint: '√분산은 "제곱해서 분산이 되는 양수"예요. 몇을 제곱하면 4가 될까요?',
+          sol: '√4 = <b>2</b> · 그림의 띠처럼 자료는 대체로 평균 5에서 ±2 안쪽에 모여 있어요.' }
+      ],
+      outro: '💡 오늘 배울 <b class="c-loss">손실</b>도 분산과 똑같은 생각이에요. 오차(편차처럼 + − 가 섞임)를 그냥 더하면 지워지니까, <b>제곱해서 평균</b>을 내요.'
+    },
+    /* --- 미분계수 = 평균 변화율의 극한 (설명 + 슬라이더) --- */
+    {
+      id: 'diff', g: 'diff', title: '미분계수 = 평균 변화율의 극한', use: '경사하강법에서 쓰는 "기울기" (2학년 심화)', type: 'info',
+      exOpen: true,
+      ex: `<div class="ex-grid"><div><canvas data-ex></canvas>
+          <div class="slider-row" style="margin-top:8px"><label>h</label><input type="range" min="0" max="100" step="1" value="0" data-h><output data-ho></output></div>
+          <p class="small muted" style="margin:4px 0 0">슬라이더를 오른쪽으로 → h가 0에 가까워져요</p></div><div>
+        <p>예시: <span class="mono">f(x) = x²</span> 위의 점 <b class="c-real">A(1, 1)</b>과 <b class="c-move">B(1 + h, f(1 + h))</b></p>
+        <p>① <b>평균 변화율</b> = A와 B를 이은 직선(<span class="c-move">할선</span>)의 기울기 = <span class="mono">(f(1 + h) − f(1)) ÷ h</span></p>
+        <div class="calc" data-hv style="font-size:15px"></div>
+        <p style="margin-top:10px">② h를 0에 가깝게 하면 B가 A로 다가가고, <span class="c-move">할선</span>이 A에서의 <span class="c-slope">접선</span>과 겹쳐요.</p>
+        <p>③ 이 <b>극한값</b>이 <b>미분계수</b>예요. 미분계수는 곧 <b class="c-slope">접선의 기울기</b>예요.</p>
+        <div class="eq" style="font-size:15px">f′(1) = lim<sub>h→0</sub> (f(1 + h) − f(1)) ÷ h = <b class="c-slope">2</b></div>
+        <p class="small" style="margin-top:8px">⛰️ 경사하강법은 손실 그래프 위 <b>지금 위치에서의 미분계수(접선의 기울기)</b>를 보고 움직여요. 오늘은 h = 0.01로 평균 변화율을 계산해서 미분계수 대신 써요.</p></div></div>`,
+      exInit: el => {
+        const f = t => t * t, s = el.querySelector('[data-h]'), hOf = k => 2 * Math.pow(0.005, k / 100);
+        const draw = () => {
+          const h = hOf(+s.value), m = (f(1 + h) - f(1)) / h;
+          el.querySelector('[data-ho]').textContent = h >= 0.1 ? MF.round(h, 2) : MF.round(h, 3);
+          const { x, px, py } = smallFrame(el.querySelector('[data-ex]'), [-0.5, 3.2], [0, 10], [0, 1, 2, 3], [0, 2, 4, 6, 8, 10], 'x', '');
+          inPlot(x, () => {
+            curve(x, px, py, f, -0.5, 3.2, '#94a3b8', 3);
+            x.setLineDash([6, 4]); curve(x, px, py, t => 1 + 2 * (t - 1), -0.5, 3.2, COL.slope, 2.5); x.setLineDash([]);
+            curve(x, px, py, t => 1 + m * (t - 1), -0.5, 3.2, COL.move, 2.5);
+          });
+          dot(x, px(1), py(1), 6, COL.real); label(x, 'A', px(1) - 8, py(1) - 8, COL.real, 'right', '800 13px Pretendard, sans-serif');
+          dot(x, px(1 + h), py(f(1 + h)), 6, COL.move); if (h > 0.08) label(x, 'B', px(1 + h) + 8, py(f(1 + h)) + 4, COL.move, 'left', '800 13px Pretendard, sans-serif');
+          label(x, '접선 (기울기 2)', px(2.9), py(4.8) + 18, COL.slope, 'right', '800 12px Pretendard, sans-serif');
+          label(x, '할선', px(-0.4), py(1 - 1.4 * m) - 6, COL.move, 'left', '800 12px Pretendard, sans-serif');
+          const hs = h >= 0.1 ? MF.round(h, 2) : MF.round(h, 3);
+          el.querySelector('[data-hv]').innerHTML = `h = <b>${hs}</b> 일 때 평균 변화율<br>(${MF.round(f(1 + h), 4)} − 1) ÷ ${hs} = <b class="c-move" style="font-size:18px">${MF.round(m, 3)}</b>${h < 0.02 ? ' → <b class="c-slope">2에 아주 가까워요!</b>' : ''}`;
+        };
+        s.addEventListener('input', draw); draw();
+      }
+    }
+  ];
+  const preSt = store.pre4 || (store.pre4 = {});
+  const preHint = store.preHint || (store.preHint = {});
+  // 활동지에 담는 단위(문항). 평균·편차·분산 화면은 문항 3개로 나눠 기록한다
+  const ITEMS = PRE.flatMap(p => p.type === 'multi' ? p.steps.map(st => ({ ...st, g: p.g })) : p.type === 'info' ? [] : [p]);
+  const slideState = p => {
+    if (p.type === 'survey' || p.type === 'info') return preSt[p.id] ? 'ok' : '';
+    const sts = (p.type === 'multi' ? p.steps : [p]).map(q => preSt[q.id] && preSt[q.id].st);
+    if (sts.some(v => !v)) return sts.some(Boolean) ? 'half' : '';
+    for (const k of ['no', 'idk', 're']) if (sts.includes(k)) return k;
+    return 'ok';
+  };
+  const parseNum = s => { const t = String(s).replace(/[−–]/g, '-').replace(/\s/g, ''); return /^-?(\d+\.?\d*|\.\d+)$/.test(t) ? +t : NaN; };
+  const preLabel = { ok: '맞음', re: '다시 풀어 맞음', no: '틀림', idk: '모르겠음' };
+  const preList = document.getElementById('preList');
+  let preCur = Math.min(store.preCur || 0, PRE.length);
+  const cards = [];
+  const preStatus = () => {
+    const box = document.getElementById('preStatus');
+    let html = '', last = '';
+    PRE.forEach((p, i) => {
+      if (p.g !== last) { html += `${last ? '</span>' : ''}<span class="pre-grp"><b>${GROUPS[p.g]}</b>`; last = p.g; }
+      const cls = slideState(p);
+      html += `<button class="dot ${cls} ${i === preCur ? 'cur' : ''}" data-go="${i}" title="${p.title}">${p.type === 'survey' ? '∂' : i + 1}</button>`;
+    });
+    html += `</span><span class="pre-grp"><button class="dot ${preCur === PRE.length ? 'cur' : ''}" data-go="${PRE.length}" title="결과 보기">✓</button></span>`;
+    box.innerHTML = html;
+  };
+  const go = i => {
+    preCur = Math.max(0, Math.min(PRE.length, i)); store.preCur = preCur; persist();
+    cards.forEach((c, k) => c.classList.toggle('cur', k === preCur));
+    document.getElementById('prePrev').disabled = preCur === 0;
+    document.getElementById('preNext').textContent = preCur === PRE.length ? '✓ 결과를 확인했어요' : preCur === PRE.length - 1 ? '결과 보기 →' : '다음 문제 →';
+    document.getElementById('preNext').disabled = preCur === PRE.length;
+    document.getElementById('preCount').textContent = preCur < PRE.length ? `${preCur + 1} / ${PRE.length} · ${GROUPS[PRE[preCur].g]}` : '결과';
+    if (preCur === PRE.length) renderPreResult();
+    if (PRE[preCur] && PRE[preCur].type === 'info' && !preSt[PRE[preCur].id]) { preSt[PRE[preCur].id] = { st: 'seen' }; persist(); }
+    preStatus();
+    const ex = cards[preCur] && cards[preCur].querySelector('.pre-ex');
+    if (ex && ex.classList.contains('open') && cards[preCur]._init) cards[preCur]._init();
+  };
+  document.getElementById('preStatus').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(+b.dataset.go); });
+  document.getElementById('prePrev').addEventListener('click', () => go(preCur - 1));
+  document.getElementById('preNext').addEventListener('click', () => go(preCur + 1));
+
+  // 한 화면에서 차례로 풀어 가는 문항 묶음 (평균 → 편차 → 분산)
+  const buildMulti = (p, i) => {
+    const card = document.createElement('div'); card.className = 'pre-card';
+    card.innerHTML = `<div class="pre-top"><span class="n">${i + 1}</span><h3>${p.title}</h3><span class="use">오늘 쓰이는 곳: ${p.use}</span></div>
+      <div class="multi"><div><canvas data-dp></canvas></div><div>${p.steps.map((st, k) => `
+        <div class="mstep" data-k="${k}">
+          <div class="mstep-intro"><span class="mstep-no">${k + 1}</span>${st.intro}</div>
+          <div class="pre-q">${st.q}</div>
+          <div class="pre-ans"><input type="text" inputmode="decimal" placeholder="답" data-in><button class="btn primary sm" data-check>확인</button><button class="btn sm" data-hint>💡 힌트</button></div>
+          <div class="mstep-hint" data-hinttxt>💡 ${st.hint}</div>
+          <div class="pre-fb" data-fb></div>
+          <div class="mstep-sol" data-sol>풀이: ${st.sol}</div>
+        </div>`).join('')}
+        <div class="box key small" data-outro style="margin-top:12px">${p.outro}</div></div></div>`;
+    preList.append(card); cards.push(card);
+    // 네 문항은 처음부터 모두 보인다. 그림 정보는 그 문항을 맞히거나 💡 힌트를 눌렀을 때만 하나씩 더해진다.
+    // 틀리면 다시 풀게 하고, 두 번 틀리면 풀이를 연다. 맞힌 문항은 잠근다.
+    const right = k => { const s = preSt[p.steps[k].id]; return !!s && (s.st === 'ok' || s.st === 're'); };
+    const refresh = () => {
+      card.querySelectorAll('.mstep').forEach((el, k) => {
+        const s = preSt[p.steps[k].id], fb = el.querySelector('[data-fb]'), ok = right(k);
+        fb.className = 'pre-fb ' + (s ? (ok ? 'ok' : 'no') : '');
+        fb.textContent = !s ? '' : s.st === 'ok' ? '✅ 정답이에요!' : s.st === 're' ? '✅ 다시 풀어서 맞혔어요!' : (s.n || 1) >= 2 ? '❌ 아래 풀이를 보고 다시 풀어 보세요.' : '❌ 아쉬워요. 💡 힌트를 보고 다시 풀어 보세요.';
+        el.querySelector('[data-sol]').classList.toggle('open', !!s && !ok && (s.n || 1) >= 2);
+        const input = el.querySelector('[data-in]');
+        if (s && s.v != null) input.value = s.v;
+        input.disabled = ok; el.querySelector('[data-check]').disabled = ok;
+      });
+      card.querySelector('[data-outro]').style.display = p.steps.every((_, k) => right(k)) ? '' : 'none';
+      const hint = k => !!preHint[p.steps[k].id];
+      card.querySelectorAll('[data-hinttxt]').forEach((el, k) => el.classList.toggle('open', hint(k) && !right(k)));
+      card.querySelectorAll('[data-hint]').forEach((b, k) => { b.disabled = hint(k) || right(k); });
+      devPlot(card.querySelector('[data-dp]'), p.data, { mean: right(0), dev: hint(1) || right(1) || hint(2) || right(2), sq: hint(2) || right(2), band: right(3) });
+      card.className = 'pre-card ' + slideState(p) + (cards.indexOf(card) === preCur ? ' cur' : '');
+      preStatus();
+    };
+    card.querySelectorAll('.mstep').forEach((el, k) => {
+      const st = p.steps[k], input = el.querySelector('[data-in]');
+      const check = () => {
+        if (right(k)) return;
+        const v = input.value.trim(); if (!v) { MF.toast('답을 입력해 주세요.'); return; }
+        const ok = Math.abs(parseNum(v) - st.answer) < 1e-9, prev = preSt[st.id];
+        preSt[st.id] = { st: ok ? (prev ? 're' : 'ok') : 'no', v, n: (prev ? prev.n || 1 : 0) + 1, first: prev ? prev.first : (ok ? '맞음' : `틀림(${v})`) };
+        persist(); refresh();
+      };
+      el.querySelector('[data-check]').addEventListener('click', check);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      el.querySelector('[data-hint]').addEventListener('click', () => { preHint[st.id] = true; persist(); refresh(); });
+    });
+    refresh();
+  };
+  PRE.forEach((p, i) => {
+    if (p.type === 'multi') { buildMulti(p, i); return; }
+    const card = document.createElement('div');
+    card.className = 'pre-card';
+    const isSv = p.type === 'survey' || p.type === 'info';
+    card.innerHTML = `
+      <div class="pre-top"><span class="n">${isSv ? '∂' : i + 1}</span><h3>${p.title}</h3><span class="use">오늘 쓰이는 곳: ${p.use}</span></div>
+      ${isSv ? '' : `<div class="pre-body ${p.qDraw ? 'wide' : ''}">
+        <div>
+          <div class="pre-q">${p.q}</div>
+          <div class="pre-ans">
+            ${p.type === 'choice' ? p.choices.map(c => `<button class="choice" data-c="${c}">${c}</button>`).join('') : '<input type="text" inputmode="decimal" placeholder="답" data-in>'}
+          </div>
+          <div class="pre-ans"><button class="btn primary sm" data-check>확인</button><button class="btn sm" data-idk>🤔 모르겠어요</button><button class="btn sm" data-tg>📖 설명 보기</button></div>
+          <div class="pre-fb" data-fb></div>
+        </div>
+        ${p.qDraw ? '<canvas data-q></canvas>' : ''}
+      </div>`}
+      <div class="pre-ex">${p.ex}</div>
+      ${p.type === 'survey' ? `<div class="pre-q" style="margin-top:14px">${p.q}</div><div class="pre-ans">${p.choices.map(c => `<button class="choice" data-c="${c}">${c}</button>`).join('')}</div>` : ''}`;
+    preList.append(card); cards.push(card);
+    if (p.qDraw) p.qDraw(card.querySelector('[data-q]'));
+    const ex = card.querySelector('.pre-ex'), tg = card.querySelector('[data-tg]'), fb = card.querySelector('[data-fb]');
+    let inited = false, chosen = null;
+    card._init = () => { if (!inited && p.exInit) { p.exInit(ex); inited = true; } };
+    const openEx = on => { ex.classList.toggle('open', on); if (tg) tg.textContent = on ? '📖 설명 접기' : '📖 설명 보기'; if (on) card._init(); };
+    if (p.exOpen) ex.classList.add('open');
+    if (tg) tg.addEventListener('click', () => openEx(!ex.classList.contains('open')));
+    card.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => {
+      chosen = b.dataset.c; card.querySelectorAll('[data-c]').forEach(o => o.classList.toggle('sel', o === b));
+      if (isSv) { preSt[p.id] = { st: 'ok', v: chosen, first: chosen }; persist(); preStatus(); }
+    }));
+    const show = () => {
+      const s = preSt[p.id];
+      if (isSv) { if (s) card.querySelectorAll('[data-c]').forEach(o => o.classList.toggle('sel', o.dataset.c === s.v)); return; }
+      card.className = 'pre-card ' + (s ? s.st : '') + (cards.indexOf(card) === preCur ? ' cur' : '');
+      fb.className = 'pre-fb ' + (s ? (s.st === 're' ? 'ok' : s.st) : '');
+      fb.textContent = !s ? '' : s.st === 'ok' ? '✅ 정답이에요! [다음 문제 →]로 넘어가세요.' : s.st === 're' ? '✅ 설명을 보고 다시 풀어서 맞혔어요!' : s.st === 'no' ? '❌ 아쉬워요. 아래 설명을 읽고 다시 풀어 보세요.' : '🤔 괜찮아요! 아래 설명을 읽고 풀어 보세요.';
+      if (s && s.v != null) { if (p.type === 'choice') card.querySelectorAll('[data-c]').forEach(o => o.classList.toggle('sel', o.dataset.c === s.v)); else card.querySelector('[data-in]').value = s.v; }
+      if (s && s.st !== 'ok') openEx(true);
+    };
+    if (!isSv) {
+      const input = card.querySelector('[data-in]');
+      const check = () => {
+        const v = p.type === 'choice' ? chosen : input.value.trim();
+        if (!v) { MF.toast(p.type === 'choice' ? '답을 하나 골라 주세요.' : '답을 입력해 주세요.'); return; }
+        const right = p.type === 'choice' ? v === p.answer : Math.abs(parseNum(v) - p.answer) < 1e-9;
+        const prev = preSt[p.id];
+        if (prev && (prev.st === 'ok' || prev.st === 're')) return;
+        preSt[p.id] = { st: right ? (prev ? 're' : 'ok') : 'no', v, first: prev ? prev.first : (right ? '맞음' : `틀림(${v})`) };
+        persist(); show(); preStatus();
+      };
+      card.querySelector('[data-check]').addEventListener('click', check);
+      if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      card.querySelector('[data-idk]').addEventListener('click', () => {
+        const prev = preSt[p.id];
+        if (prev && (prev.st === 'ok' || prev.st === 're')) { openEx(true); return; }
+        preSt[p.id] = { st: 'idk', v: null, first: prev ? prev.first : '모르겠음' };
+        persist(); show(); preStatus();
+      });
+    }
+    show();
+  });
+  // 결과 카드
+  const resCard = document.createElement('div');
+  resCard.className = 'pre-card'; resCard.innerHTML = '<div class="pre-top"><span class="n">✓</span><h3>나의 준비 상태</h3></div><div data-res style="margin-top:10px"></div>';
+  preList.append(resCard); cards.push(resCard);
+  function renderPreResult() {
+    const rows = Object.keys(GROUPS).filter(g => ITEMS.some(p => p.g === g)).map(g => {
+      const items = ITEMS.filter(p => p.g === g);
+      return `<tr><th>${GROUPS[g]}</th><td>${items.map(p => {
+        const s = preSt[p.id], t = p.type === 'survey' ? (s ? s.v : '고르지 않음') : s ? preLabel[s.st] : '풀지 않음';
+        const c = !s ? '#94a3b8' : p.type === 'survey' ? COL.slope : s.st === 'ok' ? '#15803d' : s.st === 're' ? '#b45309' : s.st === 'no' ? '#be123c' : '#4338ca';
+        return `<div><span style="color:${c};font-weight:800">●</span> ${p.title}: <b style="color:${c}">${t}</b></div>`;
+      }).join('')}</td></tr>`;
+    }).join('');
+    resCard.querySelector('[data-res]').innerHTML = `<table class="pre-res">${rows}</table>
+      <p class="small muted" style="margin-top:10px">풀지 않은 문제는 위의 번호를 눌러 돌아갈 수 있어요. 다 됐으면 아래 [다음 →]을 눌러 손실함수로 넘어가요.</p>`;
+  }
+  const preRecords = () => ITEMS.map(p => {
+    const s = preSt[p.id], name = `${GROUPS[p.g]} · ${p.title}`;
+    if (p.type === 'survey') return [name, s ? s.v : '(고르지 않음)'];
+    if (!s) return [name, '(풀지 않음)'];
+    const last = s.st === 'no' && s.v ? `틀림(${s.v})` : preLabel[s.st];
+    const base = s.first === last || s.first === preLabel[s.st] ? last : `처음: ${s.first} → 지금: ${last}`;
+    return [name, base + (preHint[p.id] ? ' (힌트 봄)' : '')];
+  });
+  const preSummary = () => {
+    const qs = ITEMS.filter(p => p.type !== 'survey'), c = { ok: 0, re: 0, no: 0, idk: 0 };
+    qs.forEach(p => { const s = preSt[p.id]; if (s) c[s.st]++; });
+    const weak = qs.filter(p => preSt[p.id] && preSt[p.id].st !== 'ok').map(p => p.title);
+    const d = '';
+    return `바로 맞음 ${c.ok}/${qs.length} · 다시 풀어 맞음 ${c.re} · 틀림 ${c.no} · 모르겠음 ${c.idk}${d}${weak.length ? ` (도움이 필요했던 개념: ${weak.join(', ')})` : ''}`;
+  };
+  go(preCur);
+  renderers.pre = () => go(preCur);
+
+  /* ===== 0. 큰 그림: 일차 / 이차 / 모든 점을 지나는 7차 함수, 여러 분야의 예시 ===== */
+  // 연립방정식 풀기 (가우스 소거)
+  const solve = (A, b) => {
+    const n = b.length, M = A.map((r, i) => [...r, b[i]]);
+    for (let c = 0; c < n; c++) {
+      let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+      [M[c], M[p]] = [M[p], M[c]];
+      for (let r = 0; r < n; r++) if (r !== c) { const k = M[r][c] / M[c][c]; for (let j = c; j <= n; j++) M[r][j] -= k * M[c][j]; }
+    }
+    return M.map((r, i) => r[n] / r[i]);
+  };
+  // 최소제곱 다항식 (계수 c0, c1, …). 차수 + 1 = 점의 개수이면 모든 점을 지난다
+  const polyFit = (xs, ys, deg) => {
+    if (deg + 1 === xs.length) return solve(xs.map(x => xs.map((_, j) => x ** j)), ys.slice());
+    const m = deg + 1;
+    const A = [...Array(m)].map((_, i) => [...Array(m)].map((_, j) => xs.reduce((s, x) => s + x ** (i + j), 0)));
+    const b = [...Array(m)].map((_, i) => xs.reduce((s, x, k) => s + ys[k] * x ** i, 0));
+    return solve(A, b);
+  };
+  const polyAt = (c, t) => c.reduce((s, v, k) => s + v * t ** k, 0);
+  const SUP = ['', '', '²', '³', '⁴', '⁵', '⁶', '⁷'];
+  const nice = v => { const a = Math.abs(v); return a >= 100 ? Math.round(a).toLocaleString() : a >= 10 ? (Math.round(a * 10) / 10).toString() : (Math.round(a * 100) / 100).toString(); };
+  const polyText = (c, cls = '') => c.map((v, k) => [v, k]).reverse().map(([v, k], i) => {
+    const body = `${nice(v)}${k ? 'x' + SUP[k] : ''}`;
+    return `${i ? (v < 0 ? ' − ' : ' + ') : v < 0 ? '−' : ''}<span class="${cls}">${body}</span>`;
+  }).join('');
+  const C_QUAD = polyFit(X, Y, 2), C_POLY = polyFit(X, Y, 7);
+  const ASK = 1.4;
+  const MODELS = {
+    line: { f: t => A_BEST * t, color: COL.mine, n: 1, formula: `y = <span class="c-mine">${f2(A_BEST)}</span>x`, name: '일차함수' },
+    quad: { f: t => polyAt(C_QUAD, t), color: COL.sy, n: 3, formula: `y = ${polyText(C_QUAD)}`, name: '이차함수' },
+    poly: { f: t => polyAt(C_POLY, t), color: COL.pos, n: 8, formula: `y = ${polyText(C_POLY)}`, name: '7차 함수' }
+  };
+  let bigMode = 'line';
+  const renderBig = () => {
+    const M = MODELS[bigMode], cv = document.getElementById('bigChart'), x = prep(cv, W, HT);
+    const g = frame(x, W, HT, [0, 1.5], [0, 26], [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4], [0, 5, 10, 15, 20, 25], '탄 시간 (시간)', '이동 거리 (km)');
+    const { px, py } = g, pred = M.f(ASK), shown = pred > 0 && pred < 26;
+    document.querySelectorAll('#bigMode button').forEach(b => b.classList.toggle('on', b.dataset.v === bigMode));
+    g.clip();
+    x.fillStyle = 'rgba(234,88,12,.07)'; x.fillRect(px(1.02), py(26), px(1.5) - px(1.02), py(0) - py(26));
+    curve(x, px, py, M.f, bigMode === 'poly' ? 0.17 : 0, bigMode === 'poly' ? 1.47 : 1.5, M.color, 3);
+    dash(x, px(ASK), py(0), px(ASK), py(26), COL.move);
+    if (shown) dot(x, px(ASK), py(pred), 7, COL.move);
+    x.restore();
+    label(x, '아직 없는 값', px(1.26), P.t + 16, COL.move, 'center', '700 12px Pretendard, sans-serif');
+    X.forEach((xv, i) => dot(x, px(xv), py(Y[i]), 5.5, COL.real));
+    label(x, `${ASK}시간이면?`, px(ASK) - 6, py(2), COL.move, 'right', '800 13px Pretendard, sans-serif');
+    if (shown) label(x, `${f1(pred)} km`, px(ASK) - 10, py(pred) - 8, COL.move, 'right', '800 14px Pretendard, sans-serif');
+    document.getElementById('bigFormula').innerHTML = `<div style="font-family:Pretendard, sans-serif;font-size:14.5px"><b style="color:${M.color}">${M.name}</b> · 정해야 할 숫자(계수) <b>${M.n}개</b></div>${M.formula}`;
+    const sse = X.reduce((s, xv, i) => s + (Y[i] - M.f(xv)) ** 2, 0) / N;
+    document.getElementById('bigNote').innerHTML = {
+      line: `점들을 모두 지나지는 않지만 <b>고르게</b> 지나가요. 1.4시간이면 약 <b class="c-move">${f1(pred)} km</b>라고 그럴듯하게 예측해요. 기울기 ${f1(A_BEST)}는 "1시간에 약 ${f1(A_BEST)} km"라는 뜻도 분명해요.`,
+      quad: `살짝 휘어진 곡선이에요. 점들에 조금 더 가깝지만, 1.4시간 예측 <b class="c-move">${f1(pred)} km</b>는 직선과 크게 다르지 않아요. 숫자가 3개로 늘었는데 얻는 게 별로 없어요.`,
+      poly: `점 8개를 <b>모두 정확히</b> 지나요(오차 0). 하지만 계수가 수천~수만이나 되고 점과 점 사이에서 이리저리 휘어요. 1.4시간이면 <b class="c-move">${shown ? f1(pred) + ' km' : Math.round(pred).toLocaleString() + ' km (그래프 밖!)'}</b>라는 엉뚱한 예측을 해요. 😵 <b>잡음까지 외워 버린</b> 거예요.`
+    }[bigMode] + `<div class="small muted" style="margin-top:6px">기록과의 차이(오차²의 평균): ${sse < 0.005 ? '0' : f2(sse)}</div>`;
+  };
+  document.getElementById('bigMode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { bigMode = b.dataset.v; renderBig(); } });
+
+  // 여러 분야의 예시 데이터 (규칙 + 작은 잡음)
+  const rnd = (() => { let s = 7; return () => { s = (s * 16807) % 2147483647; return s / 2147483647 - 0.5; }; })();
+  const GAL = [
+    { tag: '💪 의료·체육', title: '운동 시간 → 소모 칼로리', xl: '운동 시간 (분)', yl: '칼로리 (kcal)', xs: [10, 15, 20, 25, 30, 35, 40, 45, 50, 60], f: x => 7 * x + 5, noise: 40,
+      mean: (m) => `운동을 <b>1분</b> 더 할 때마다 약 <b>${nice(m)} kcal</b>를 더 써요.` },
+    { tag: '💰 경영·경제', title: '광고비 → 매출', xl: '광고비 (만 원)', yl: '매출 (만 원)', xs: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100], f: x => 3 * x + 60, noise: 50,
+      mean: (m) => `광고비를 <b>1만 원</b> 더 쓸 때마다 매출이 약 <b>${nice(m)}만 원</b> 늘어요.` },
+    { tag: '🔬 자연과학', title: '추의 무게 → 용수철이 늘어난 길이', xl: '추의 무게 (g)', yl: '늘어난 길이 (cm)', xs: [50, 100, 150, 200, 250, 300], f: x => 0.02 * x, noise: 0.3,
+      mean: (m) => `추가 <b>1 g</b> 무거워질 때마다 약 <b>${nice(m)} cm</b>씩 더 늘어나요. (과학 시간의 후크 법칙!)` },
+    { tag: '📚 교육·사회', title: '공부 시간 → 시험 점수', xl: '주당 공부 시간 (시간)', yl: '점수', xs: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], f: x => 4.5 * x + 45, noise: 14,
+      mean: (m) => `일주일에 <b>1시간</b> 더 공부할 때마다 점수가 약 <b>${nice(m)}점</b> 올라요.` },
+    { tag: '🌏 환경', title: '연도 → 연평균 기온', xl: '연도', yl: '연평균 기온 (°C)', xs: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020], f: x => 12.2 + 0.03 * (x - 1980), noise: 0.6,
+      mean: (m) => `<b>1년</b>마다 기온이 약 <b>${nice(m)} °C</b>씩 올라요. 10년이면 약 ${nice(m * 10)} °C!` },
+    { tag: '🚗 공학', title: '주행 거리 → 연료 사용량', xl: '주행 거리 (km)', yl: '연료 사용량 (L)', xs: [20, 40, 60, 80, 100, 120, 140, 160, 180, 200], f: x => 0.075 * x + 0.4, noise: 1.4,
+      mean: (m) => `<b>1 km</b> 더 달릴 때마다 연료를 약 <b>${nice(m)} L</b> 더 써요. 100 km면 약 ${nice(m * 100)} L!` },
+    { tag: '⚠️ 직선이 안 맞는 경우', title: '나이 → 키', xl: '나이 (세)', yl: '키 (cm)', xs: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24], f: x => 50 + 125 * (1 - Math.exp(-x / 7.5)), noise: 3, bad: true,
+      mean: () => `어릴 때는 빨리 자라다가 어른이 되면 멈춰서, 점들이 <b>휘어져</b> 있어요. 직선은 어린이 키는 너무 작게, 어른 키는 너무 크게 예측해요. 이럴 때는 <b>곡선 모델</b>을 써요.` }
+  ];
+  GAL.forEach(G => { G.ys = G.xs.map(x => G.f(x) + rnd() * G.noise); const c = polyFit(G.xs, G.ys, 1); G.c = c; });
+  const niceTicks = (lo, hi, n = 5) => {
+    const raw = (hi - lo) / n, p = 10 ** Math.floor(Math.log10(raw)), st = [1, 2, 2.5, 5, 10].map(k => k * p).find(k => k >= raw);
+    const out = []; for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) out.push(Math.round(v * 1e6) / 1e6); return out;
+  };
+  let galIdx = 0;
+  const galTabs = document.getElementById('galTabs');
+  galTabs.innerHTML = GAL.map((G, i) => `<button data-i="${i}" class="${G.bad ? 'bad' : ''}">${G.tag}</button>`).join('');
+  galTabs.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { galIdx = +b.dataset.i; renderGal(); } });
+  const renderGal = () => {
+    const G = GAL[galIdx], cv = document.getElementById('galChart'), x = prep(cv, W, HT);
+    galTabs.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', i === galIdx));
+    const xs = G.xs, ys = G.ys, xpad = (xs[xs.length - 1] - xs[0]) * 0.06, ylo = Math.min(...ys), yhi = Math.max(...ys), ypad = (yhi - ylo) * 0.15;
+    const xr = [xs[0] - xpad, xs[xs.length - 1] + xpad], yr = [Math.max(0, ylo - ypad), yhi + ypad];
+    const pad = { l: 58, r: 16, t: 14, b: 46 };
+    const g = frame(x, W, HT, xr, yr, niceTicks(xr[0], xr[1], 6).filter(v => v >= xr[0] && v <= xr[1]), niceTicks(yr[0], yr[1], 5).filter(v => v >= yr[0] && v <= yr[1]), G.xl, '', pad);
+    const { px, py } = g, [b0, b1] = G.c;
+    g.clip();
+    x.strokeStyle = G.bad ? COL.pos : COL.mine; x.lineWidth = 3; x.beginPath(); x.moveTo(px(xr[0]), py(b0 + b1 * xr[0])); x.lineTo(px(xr[1]), py(b0 + b1 * xr[1])); x.stroke();
+    if (G.bad) { x.setLineDash([6, 4]); curve(x, px, py, G.f, xr[0], xr[1], COL.loss, 2.5); x.setLineDash([]); }
+    x.restore();
+    xs.forEach((xv, i) => dot(x, px(xv), py(ys[i]), 5.5, COL.real));
+    label(x, G.yl, pad.l + 6, pad.t + 12, '#4b4860', 'left', '600 12.5px Pretendard, sans-serif');
+    if (G.bad) label(x, '곡선 모델', px(xs[xs.length - 1]) - 4, py(G.f(xs[xs.length - 1])) + 18, COL.loss, 'right', '800 12.5px Pretendard, sans-serif');
+    document.getElementById('galNote').innerHTML = `<div style="font-weight:800;font-size:16px">${G.title}</div>
+      <div class="mono" style="margin:6px 0;color:${G.bad ? COL.pos : COL.mine};font-weight:800">y ≈ ${nice(b1)}x ${b0 < 0 ? '−' : '+'} ${nice(b0)}</div>
+      <div>${G.mean(b1)}</div>`;
+  };
+
+  renderers.big = () => { renderBig(); renderGal(); };
+
+  /* ===== 손실함수 탭: a 하나로 오차 → 손실 → L(a) 그래프가 함께 바뀐다 ===== */
+  const aSliders = [...document.querySelectorAll('.a-slider')];
+  const myA = document.getElementById('myA');
+  aSliders.forEach(s => { s.value = store.myA != null ? store.myA : 10; });
+  let c1Sel = store.c1Sel ?? 4;
+  let trail = new Set(store.trail || []), revealed = !!store.revealed, zoom = !!store.zoom, showVertex = !!store.showVertex;
+  const bestOfTrail = () => [...trail].reduce((b, a) => (b == null || loss(a) < loss(b) ? a : b), null);
+  const P2 = SXX, P1 = 2 * SXY, P0 = SYY; // L(a) = P2·a² − P1·a + P0
+  const LFORM = `${P2.toFixed(3)}a² − ${P1.toFixed(3)}a + ${P0.toFixed(3)}`;
+  const tidy = v => String(Math.round(v * 10000) / 10000);
+  const co = v => (Math.abs(v - 1) < 1e-9 ? '' : tidy(v)); // 계수 1은 쓰지 않는다
+  // 오차² 막대 8개와 그 평균(= 손실)을 가로선으로
+  const drawSqBars = (cv, es, { w = 520, h = 200, dpr = 2, small = false } = {}) => {
+    const x = prep(cv, w, h, dpr), l = small ? 12 : 30, r = small ? 12 : 86, top = 22, bot = small ? 8 : 22;
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+    const sq = es.map(v => v * v), Lm = mean(sq), max = Math.max(...sq, 0.01) * 1.08;
+    const base = h - bot, unit = (base - top) / max, bw = (w - l - r) / N;
+    x.strokeStyle = '#9b97ad'; x.lineWidth = 1; x.beginPath(); x.moveTo(l, base); x.lineTo(w - r, base); x.stroke();
+    sq.forEach((v, i) => {
+      const cx = l + bw * i + bw * 0.2, bwid = bw * 0.6, hh = v * unit;
+      x.fillStyle = 'rgba(225,29,72,.75)'; x.fillRect(cx, base - hh, bwid, hh);
+      if (!small) {
+        x.fillStyle = '#4b4860'; x.font = '600 10.5px Pretendard, sans-serif'; x.textAlign = 'center'; x.fillText(f1(v), cx + bwid / 2, base - hh - 4);
+        x.fillStyle = COL.real; x.font = '700 11px Pretendard, sans-serif'; x.fillText(NUM[i], cx + bwid / 2, h - 6);
+      }
+    });
+    const my = base - Lm * unit;
+    x.setLineDash([6, 4]); x.strokeStyle = COL.loss; x.lineWidth = 2.5; x.beginPath(); x.moveTo(l, my); x.lineTo(w - r + (small ? 0 : 6), my); x.stroke(); x.setLineDash([]);
+    if (!small) { label(x, '평균', w - r + 10, my - 4, COL.loss, 'left', '800 13px Pretendard, sans-serif'); label(x, `= 손실 ${lossLabel(Lm)}`, w - r + 10, my + 13, COL.loss, 'left', '800 12px Pretendard, sans-serif'); }
+  };
+  const lmPos = L => Math.min(100, Math.sqrt(Math.max(L, 0) / 90) * 100);
+  let lmPrev = null;
+  const lmTrend = L => {
+    const prev = lmPrev; lmPrev = L;
+    if (prev == null || Math.abs(prev - L) < 0.005) return '';
+    return L < prev ? '<span class="lm-tr down">▼ 줄었어요</span>' : '<span class="lm-tr up">▲ 늘었어요</span>';
+  };
+  const renderMine = () => {
+    const a = +myA.value, m = { a }, es = errs(m), L = loss(a);
+    trail.add(Math.round(a * 10) / 10);
+    aSliders.forEach(s => { s.value = a; s.nextElementSibling.textContent = f1(a); });
+    // ② 오차 재기
+    drawData(document.getElementById('c1'), { lines: [{ m, color: COL.mine, name: `y = ${f1(a)}x` }], err: m, sel: c1Sel, nums: true });
+    document.getElementById('c1Calc').innerHTML = `
+      <div class="pt-title">a = ${f1(a)}일 때 · 직선 y = ${f1(a)}x</div>
+      <div class="pt-sub">오차와 오차² 8개</div>
+      <table class="pt-table"><tr>${es.map((_, i) => `<th class="${i === c1Sel ? 'on' : ''}" data-pt="${i}">${NUM[i]}</th>`).join('')}</tr>
+        <tr>${es.map((v, i) => `<td class="${i === c1Sel ? 'on' : ''} ${v >= 0 ? 'c-pos' : 'c-neg'}" data-pt="${i}">${v > 0.04 ? '+' : v < -0.04 ? '−' : ''}${f1(Math.abs(v))}</td>`).join('')}</tr>
+        <tr class="sq-row">${es.map((v, i) => `<td class="${i === c1Sel ? 'on' : ''}" data-pt="${i}">${f1(v * v)}</td>`).join('')}</tr></table>
+      <div class="small muted" style="margin-top:4px">윗줄: 오차 · 아랫줄: 오차²</div>
+      <div class="loss-meter">
+        <div class="lm-top"><span>손실 = 오차²의 평균</span><b class="c-loss">L = ${lossLabel(L)}</b>${lmTrend(L)}</div>
+        <div class="lm-bar"><div class="lm-fill" style="width:${lmPos(L)}%"></div><div class="lm-best" style="left:${lmPos(L_BEST)}%"></div></div>
+        <div class="lm-scale"><span>0 (완벽)</span><span>◆ 가장 작은 손실</span><span>클수록 잘 안 맞음</span></div>
+      </div>`;
+    // ③ L(a)를 식으로: 8개 점의 오차를 식으로 제곱해서 더하고 8로 나눈다
+    const sqs = es.map(v => v * v), sum = sqs.reduce((t, v) => t + v, 0);
+    document.getElementById('drvTable').innerHTML = `
+      <thead><tr><th>점</th><th>(시간, 거리)</th><th><b>①</b> 오차 = 실제 − 예측</th><th><b>②</b> 오차² (전개)</th><th class="now">a = ${f1(a)}일 때 오차²</th></tr></thead>
+      <tbody>${X.map((xv, i) => `<tr><td>${NUM[i]}</td><td>(${xv}, ${Y[i]})</td>
+        <td class="mono">${Y[i]} − ${co(xv)}a</td>
+        <td class="mono">${co(xv * xv)}a² − ${tidy(2 * xv * Y[i])}a + ${tidy(Y[i] * Y[i])}</td>
+        <td class="mono now">${f2(sqs[i])}</td></tr>`).join('')}</tbody>
+      <tfoot>
+        <tr><td colspan="3"><b>③</b> 8개를 모두 더하면</td><td class="mono">${tidy(8 * P2)}a² − ${tidy(8 * P1)}a + ${tidy(8 * P0)}</td><td class="mono now">${f2(sum)}</td></tr>
+        <tr class="avg"><td colspan="3"><b>④</b> 8로 나누면 (평균) = <b class="c-loss">손실</b></td><td class="mono"><b class="c-loss">${LFORM}</b></td><td class="mono now"><b class="c-loss">${lossLabel(L)}</b></td></tr>
+      </tfoot>`;
+    document.getElementById('lossCheck').innerHTML = `✔ 확인: L(${f1(a)}) = ${P2.toFixed(3)} × ${f1(a)}² − ${P1.toFixed(3)} × ${f1(a)} + ${P0.toFixed(3)} ≈ <b class="c-loss">${lossLabel(L)}</b> (표의 오른쪽 아래 값과 같아요)`;
+    // ④ L(a)의 그래프
+    drawLoss(document.getElementById('c4'), { curve: revealed, zoom, dots: [...trail], ball: a, marks: showVertex ? [{ a: A_BEST, color: COL.move, name: `꼭짓점 (${f2(A_BEST)}, ${f2(L_BEST)})` }] : [] });
+    document.getElementById('c4a').textContent = f1(a);
+    document.getElementById('c4l').textContent = lossLabel(L);
+    const b = bestOfTrail();
+    document.getElementById('c4best').textContent = lossLabel(loss(b));
+    document.getElementById('c4bestA').textContent = `(a = ${f1(b)})`;
+    store.myA = a; store.trail = [...trail]; store.c1Sel = c1Sel; persist();
+  };
+  document.getElementById('lossFormula').textContent = LFORM;
+  document.getElementById('lossFormula2').textContent = LFORM;
+  aSliders.forEach(s => s.addEventListener('input', () => { myA.value = s.value; renderMine(); }));
+  document.getElementById('c1').addEventListener('pointerdown', e => { c1Sel = nearestPoint(e.currentTarget, e); renderMine(); });
+  document.getElementById('c1Calc').addEventListener('click', e => { const t = e.target.closest('[data-pt]'); if (t) { c1Sel = +t.dataset.pt; renderMine(); } });
+  const revealBtn = document.getElementById('revealCurve'), zoomBtn = document.getElementById('zoomBtn'), vertexBtn = document.getElementById('vertexBtn');
+  const syncBtns = () => {
+    revealBtn.textContent = revealed ? '포물선 숨기기' : '포물선 전체 보기';
+    zoomBtn.textContent = zoom ? '↩ 전체 보기' : '🔍 바닥 확대';
+    vertexBtn.textContent = showVertex ? '◆ 꼭짓점 숨기기' : '◆ 꼭짓점 표시';
+  };
+  revealBtn.addEventListener('click', () => { revealed = !revealed; store.revealed = revealed; syncBtns(); renderMine(); });
+  zoomBtn.addEventListener('click', () => { zoom = !zoom; store.zoom = zoom; syncBtns(); renderMine(); });
+  vertexBtn.addEventListener('click', () => { showVertex = !showVertex; store.showVertex = showVertex; syncBtns(); renderMine(); });
+  document.getElementById('clearTrail').addEventListener('click', () => { trail = new Set(); renderMine(); });
+  syncBtns();
+  // 복습: 직선 y = 10x와 실제 기록 (예측값은 학생이 직접 계산)
+  const renderRev = () => {
+    drawData(document.getElementById('revChart'), { lines: [{ m: { a: 10 }, color: COL.mine, name: 'y = 10x' }], h: 300 });
+    document.getElementById('revCalc').innerHTML = `<b>예시</b> · 0.6시간 탔을 때<br>
+      예측값 = 함숫값 = <span class="mono">10 × 0.6 = <b class="c-mine">6</b></span> km<br>
+      실제 기록은 <b class="mono">9.6</b> km<br>
+      <span class="small">👉 예측값과 실제 기록의 차이가 아래에서 구할 <b>오차</b>예요.</span>`;
+  };
+  const revCheck = () => {
+    const v = parseNum(document.getElementById('revIn').value), fb = document.getElementById('revFb');
+    if (isNaN(v)) { fb.className = 'pre-fb no'; fb.textContent = '숫자로 입력해 주세요.'; return; }
+    const ok = Math.abs(v - 8) < 1e-9;
+    fb.className = 'pre-fb ' + (ok ? 'ok' : 'no');
+    fb.textContent = ok ? '✅ 정답! y = 10 × 0.8 = 8 이에요.' : '❌ x 자리에 0.8을 넣어 10 × 0.8을 계산해 보세요.';
+    store.revOk = ok || store.revOk; persist();
+  };
+  document.getElementById('revBtn').addEventListener('click', revCheck);
+  document.getElementById('revIn').addEventListener('keydown', e => { if (e.key === 'Enter') revCheck(); });
+
+  const FIX_A = 10;
+  let fixStage = store.fixStage || 0;
+  const renderFix = () => {
+    const m = { a: FIX_A }, es = errs(m), sq = es.map(v => v * v), sum = sq.reduce((t, v) => t + v, 0);
+    drawData(document.getElementById('fixChart'), { lines: [{ m, color: COL.mine, name: `y = ${FIX_A}x` }], err: fixStage >= 1 ? m : null, nums: true });
+    const FIX_LABEL = ['', '① 오차 구하기', '② 제곱하기', '③ 평균 내기'];
+    document.querySelectorAll('#fixBtns [data-fs]').forEach(b => {
+      const k = +b.dataset.fs;
+      if (!k) { b.disabled = fixStage === 0; return; } // 다시 하기
+      b.disabled = k !== fixStage + 1; b.classList.toggle('done', k <= fixStage);
+      b.textContent = (k <= fixStage ? '✓ ' : '') + FIX_LABEL[k];
+    });
+    const hide = k => (fixStage >= k ? '' : 'hid');
+    document.getElementById('fixTable').innerHTML = `
+      <thead><tr><th>점</th><th>실제</th><th>예측 (${FIX_A} × 시간)</th><th class="${hide(1)}">오차</th><th class="${hide(2)}">오차²</th></tr></thead>
+      <tbody>${X.map((xv, i) => `<tr><td>${NUM[i]}</td><td>${Y[i]}</td><td>${f1(FIX_A * xv)}</td>
+        <td class="${hide(1)} ${es[i] >= 0 ? 'c-pos' : 'c-neg'}">${fixStage >= 1 ? sg(es[i]) : '?'}</td>
+        <td class="${hide(2)}">${fixStage >= 2 ? f2(sq[i]) : '?'}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="4">${fixStage >= 3 ? '오차²의 합 ÷ 8 =' : '③을 누르면 평균을 내요'}</td><td>${fixStage >= 3 ? `${f2(sum)} ÷ 8` : ''}</td></tr>
+        <tr class="avg"><td colspan="4"><b class="c-loss">손실 L(${FIX_A})</b></td><td><b class="c-loss">${fixStage >= 3 ? lossLabel(loss(FIX_A)) : '?'}</b></td></tr></tfoot>`;
+  };
+  document.getElementById('fixBtns').addEventListener('click', e => {
+    const b = e.target.closest('[data-fs]'); if (!b) return;
+    const k = +b.dataset.fs;
+    fixStage = k === 0 ? 0 : Math.max(fixStage, k); store.fixStage = fixStage; persist(); renderFix();
+  });
+  const renderLossWhy = () => {
+    const V = [2, 4, 5, 6, 8], vm = mean(V), vsq = V.map(v => (v - vm) ** 2);
+    devPlot(document.getElementById('lossWhyVar'), V, { mean: true, dev: true, sq: true, band: false });
+    document.getElementById('lossWhyVarVal').innerHTML = `분산 = (편차²의 합) ÷ 5 = (${vsq.join(' + ')}) ÷ 5 = <b>${MF.round(mean(vsq), 2)}</b>`;
+    drawData(document.getElementById('lossWhyLoss'), { lines: [{ m: { a: SY }, color: COL.mine }], err: { a: SY }, w: 360, h: 240, small: true });
+    const lsq = errs({ a: SY }).map(v => v * v);
+    document.getElementById('lossWhyLossVal').innerHTML = `손실 = (오차²의 합) ÷ 8 = ${f2(lsq.reduce((t, v) => t + v, 0))} ÷ 8 = <b>${f2(loss(SY))}</b>`;
+  };
+  renderers.loss = () => { renderLossWhy(); renderRev(); renderFix(); renderMine(); };
+
+  /* ===== 경사하강법: 골짜기가 여러 개인 예시 손실 곡선 J(a) 위에서 실험 ===== */
+  const bumpy = t => 0.12 * (t - 6.2) ** 2 + 1.1 * Math.sin(1.6 * t) + 0.55 * Math.sin(3.9 * t + 1) + 3.2;
+  const J = bumpy, jSlope = a => (J(a + H) - J(a)) / H;
+  const JR = { ar: [0, 10], lr: [0, 9], xt: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], yt: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] };
+  const VALLEYS = []; for (let t = 0.01; t < 10; t += 0.001) if (J(t) < J(t - 0.001) && J(t) < J(t + 0.001)) VALLEYS.push(t);
+  const J_MIN = Math.min(...VALLEYS.map(J));
+  const f2s = v => (Math.round(v * 100) / 100).toFixed(2);
+  const gdCv = document.getElementById('gd'), lr = document.getElementById('lr'), fog = document.getElementById('fog'), plusMode = document.getElementById('plusMode');
+  const sgnMode = () => (plusMode.checked ? 1 : -1); // 원래 식은 빼기(−1)
+  if (store.lastLr2) lr.value = store.lastLr2;
+  let START = store.gdStart || 1.8;
+  let gd = { a: START, n: 0, path: [START], log: [], done: false, out: false }, timer = null;
+  const runBtn = document.getElementById('gdRun'), gdMsg = document.getElementById('gdMsg');
+  const setMsg = (t, cls = '') => { gdMsg.innerHTML = t; gdMsg.className = 'gd-msg ' + cls; };
+  const stop = () => { clearInterval(timer); timer = null; runBtn.textContent = '▶ 자동으로'; };
+  const clampView = v => Math.max(-0.5, Math.min(10.5, v));
+  const drawGD = (cv, { a, eta, fogOn, path, dpr = 2, moveLabel = null, valleys = false }) => {
+    const x = prep(cv, W, HT, dpr);
+    const g = frame(x, W, HT, JR.ar, JR.lr, JR.xt, JR.yt, 'a (예시 곡선)', '손실');
+    const { px, py } = g, out = a < 0 || a > 10, va = clampView(a);
+    g.clip();
+    curve(x, px, py, J, 0, 10, '#94a3b8', 3);
+    if (valleys) VALLEYS.forEach(t => dot(x, px(t), py(J(t)), 4.5, Math.abs(J(t) - J_MIN) < 1e-6 ? COL.loss : '#cbd5e1'));
+    if (fogOn) { // 공 주변만 보이게 안개를 덮는다
+      const L0 = px(va - 1), R0 = px(va + 1), fogC = 'rgba(226,232,240,.95)';
+      let gr = x.createLinearGradient(L0 - 24, 0, L0, 0); gr.addColorStop(0, fogC); gr.addColorStop(1, 'rgba(226,232,240,0)');
+      x.fillStyle = fogC; x.fillRect(0, 0, L0 - 24, HT); x.fillStyle = gr; x.fillRect(L0 - 24, 0, 24, HT);
+      gr = x.createLinearGradient(R0, 0, R0 + 24, 0); gr.addColorStop(0, 'rgba(226,232,240,0)'); gr.addColorStop(1, fogC);
+      x.fillStyle = gr; x.fillRect(R0, 0, 24, HT); x.fillStyle = fogC; x.fillRect(R0 + 24, 0, W, HT);
+    }
+    // 지나온 길
+    path.slice(0, -1).forEach((p, k) => { if (p < -0.5 || p > 10.5) return; x.fillStyle = COL.trail; x.beginPath(); x.arc(px(p), py(J(p)), 4.5, 0, Math.PI * 2); x.fill(); label(x, String(k), px(p), py(J(p)) - 8, '#c2410c', 'center', '700 10.5px Pretendard, sans-serif'); });
+    if (!out) {
+      const s = jSlope(a), next = a + (cv === gdCv ? sgnMode() : -1) * eta * s, d = 0.7;
+      x.strokeStyle = COL.slope; x.lineWidth = 3.5; x.beginPath(); x.moveTo(px(a - d), py(J(a) - s * d)); x.lineTo(px(a + d), py(J(a) + s * d)); x.stroke();
+      const ay = py(0) - 14;
+      if (Math.abs(px(clampView(next)) - px(a)) > 3) arrow(x, px(a), ay, px(clampView(next)), ay, COL.move, 4);
+      if (next >= 0 && next <= 10) { x.strokeStyle = COL.move; x.lineWidth = 2; x.setLineDash([3, 3]); x.beginPath(); x.arc(px(next), py(J(next)), 7, 0, Math.PI * 2); x.stroke(); x.setLineDash([]); }
+      x.setLineDash([4, 4]); x.strokeStyle = 'rgba(37,99,235,.55)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(px(a), py(J(a))); x.lineTo(px(a), py(0)); x.stroke(); x.setLineDash([]);
+      x.fillStyle = COL.mine; x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(px(a), py(J(a)), 8.5, 0, Math.PI * 2); x.fill(); x.stroke();
+      x.restore();
+      label(x, `기울기 ${sg(s)}`, px(a) + (s < 0 ? -16 : 16), Math.max(30, py(J(a)) - 26), COL.slope, s < 0 ? 'right' : 'left', '800 13px Pretendard, sans-serif');
+      if (Math.abs(px(clampView(next)) - px(a)) > 12) label(x, moveLabel || `이동 ${sg(next - a)}`, px(clampView(next)), py(0) - 26, COL.move, next > a ? 'right' : 'left', '800 12.5px Pretendard, sans-serif');
+    } else {
+      x.restore();
+      label(x, '💥 공이 그래프 밖으로 나갔어요', W / 2, HT / 2, '#e11d48', 'center', '800 18px Pretendard, sans-serif');
+    }
+    if (fogOn) label(x, '🌫️ 공 주변만 보여요', W - P.r - 8, P.t + 18, '#475569', 'right', '700 12.5px Pretendard, sans-serif');
+  };
+  // 걸음마다 손실 그래프: 손실이 오히려 커지는 순간이 보인다
+  const drawHist = () => {
+    const cv = document.getElementById('gdHist'), w = 400, h = 200, x = prep(cv, w, h), pad = { l: 34, r: 12, t: 14, b: 30 };
+    const pts = gd.path.filter(p => p >= 0 && p <= 10).map(J), n = Math.max(10, pts.length - 1);
+    const g = frame(x, w, h, [0, n], [0, 9], [0, Math.round(n / 2), n], [0, 3, 6, 9], '걸음', '', pad), { px, py } = g;
+    dash(x, px(0), py(pts[0]), px(n), py(pts[0]), '#94a3b8');
+    label(x, '출발 손실', px(n) - 2, py(pts[0]) - 5, '#64748b', 'right', '700 11px Pretendard, sans-serif');
+    x.strokeStyle = COL.loss; x.lineWidth = 2.5; x.beginPath(); pts.forEach((v, k) => (k ? x.lineTo(px(k), py(v)) : x.moveTo(px(k), py(v)))); x.stroke();
+    pts.forEach((v, k) => dot(x, px(k), py(v), 3.5, k && v > pts[k - 1] + 1e-9 ? COL.pos : COL.loss));
+    label(x, '손실', pad.l + 4, pad.t + 8, COL.loss, 'left', '800 11.5px Pretendard, sans-serif');
+  };
+  const sub = k => `a<sub>${k}</sub>`;
+  const renderGD = () => {
+    const a = gd.a, eta = +lr.value, out = gd.out, n = gd.n;
+    document.getElementById('lro').textContent = f2s(eta);
+    document.getElementById('gdN').textContent = n;
+    document.getElementById('gdA').textContent = out ? '???' : f2(a);
+    document.getElementById('gdL').textContent = out ? '-' : f2(J(a));
+    document.getElementById('gdStart').textContent = f1(gd.path[0]);
+    drawGD(gdCv, { a, eta, fogOn: fog.checked, path: gd.path, valleys: !fog.checked });
+    drawHist();
+    const s = jSlope(a), mv = eta * s, plus = plusMode.checked, next = plus ? a + mv : a - mv, op = plus ? '+' : '−';
+    document.getElementById('gdCalc').innerHTML = out ? '공이 그래프 밖으로 나갔어요. 보폭 η를 줄이고 [↺ 처음으로]를 눌러 보세요.' : `
+      <div class="small muted" style="margin-bottom:4px">지금 n = ${n}, ${sub(n)} = ${f2(a)}</div>
+      <div class="row"><span class="tag" style="background:var(--c-slope)">① 기울기</span><span class="mono">L′(${sub(n)}) ≈ (L(${f2(a)} + 0.01) − L(${f2(a)})) ÷ 0.01 = <b class="c-slope">${sg(s)}</b></span></div>
+      <div class="row"><span class="tag" style="background:var(--c-move)">② 곱하기</span><span class="mono"><span class="c-move">η</span> × L′(${sub(n)}) = <span class="c-move">${f2s(eta)}</span> × ${par(s)} = <b class="c-move">${sg(mv)}</b></span></div>
+      <div class="row"><span class="tag" style="background:var(--c-mine)">③ 다음 위치</span><span class="mono">${sub(n + 1)} = ${sub(n)} ${op} η × L′(${sub(n)}) = ${f2(a)} ${op} ${par(mv)} = <b class="c-mine">${f2(next)}</b></span></div>${plus ? '<div class="small" style="color:#be123c;font-weight:700;margin-top:4px">🙃 지금은 더하기(+)로 바꾼 상태예요. 공이 오르막으로 올라가요!</div>' : ''}`;
+    document.getElementById('gdLog').innerHTML = `<thead><tr><th>n</th><th>a<sub>n</sub></th><th>L(a<sub>n</sub>)</th><th>L′(a<sub>n</sub>)</th><th>η × L′(a<sub>n</sub>)</th></tr></thead><tbody>${gd.log.map(r => `<tr><td>${r[0]}</td><td>${f2(r[1])}</td><td>${f2(r[2])}</td><td style="color:${COL.slope}">${sg(r[3])}</td><td style="color:${COL.move}">${sg(r[4])}</td></tr>`).join('')}</tbody>`;
+  };
+  const runKey = eta => `출발 ${f1(gd.path[0])}, η = ${f2s(eta)}${plusMode.checked ? ' (더하기 실험)' : ''}`;
+  const recordRun = (eta, text) => { const runs = store.runs2 || (store.runs2 = {}); runs[runKey(eta)] = text; persist(); };
+  const runList = () => Object.entries(store.runs2 || {}).map(([k, t]) => `${k}: ${t}`);
+  const oneStep = () => {
+    if (gd.out || gd.done) return false;
+    const eta = +lr.value, s = jSlope(gd.a);
+    gd.log.push([gd.n, gd.a, J(gd.a), s, eta * s]);
+    gd.a += sgnMode() * eta * s; gd.n++; gd.path.push(gd.a);
+    const L0 = J(gd.path[0]);
+    if (gd.a < 0 || gd.a > 10 || !isFinite(gd.a)) {
+      gd.out = true; setMsg(`💥 ${gd.n}걸음 만에 그래프 밖으로 나갔어요! 보폭이 너무 커요.`, 'bad'); recordRun(eta, `${gd.n}걸음 만에 밖으로 나감`); renderGD(); return false;
+    }
+    const isValley = J(gd.a - 0.05) > J(gd.a) && J(gd.a + 0.05) > J(gd.a); // 언덕 꼭대기에서는 멈추지 않는다
+    const isHill = J(gd.a - 0.05) < J(gd.a) && J(gd.a + 0.05) < J(gd.a);
+    if (plusMode.checked && Math.abs(jSlope(gd.a)) < 0.03 && isHill) {
+      gd.done = true; setMsg(`🙃 ${gd.n}걸음 만에 <b>언덕 꼭대기</b>에 올라갔어요! 손실 ${f2(L0)} → ${f2(J(gd.a))}${J(gd.a) > L0 + 0.005 ? ' (오히려 커졌어요)' : ' (전혀 줄지 않았어요)'}. 그래서 빼기(−)가 필요해요.`, 'bad');
+      recordRun(eta, `${gd.n}걸음 만에 언덕 꼭대기 (손실 ${f2(J(gd.a))})`); renderGD(); return false;
+    }
+    if (Math.abs(jSlope(gd.a)) < 0.03 && isValley) {
+      gd.done = true;
+      const deepest = Math.abs(J(gd.a) - J_MIN) < 0.05, worse = J(gd.a) > L0;
+      setMsg(`🏁 ${gd.n}걸음 만에 골짜기에 멈췄어요 (a = ${f2(gd.a)}, 손실 ${f2(J(gd.a))}). ` +
+        (deepest ? '🎉 가장 깊은 골짜기예요!' : '하지만 <b>더 깊은 골짜기</b>가 있어요. (안개를 끄고 확인)') + (worse ? ' 😮 출발할 때보다 손실이 커졌어요!' : ''), deepest ? 'ok' : 'warn');
+      recordRun(eta, `${gd.n}걸음, a = ${f2(gd.a)}에 멈춤 (손실 ${f2(J(gd.a))}${deepest ? ', 가장 깊은 골짜기' : ''})`);
+      renderGD(); return false;
+    }
+    if (gd.n >= 40) {
+      setMsg(`🔁 40걸음이 지나도 멈추지 않아요. 골짜기 사이를 왔다 갔다 해요. (지금 손실 ${f2(J(gd.a))})`, 'bad');
+      recordRun(eta, `40걸음 동안 멈추지 않음 (지금 a = ${f2(gd.a)}, 손실 ${f2(J(gd.a))})`);
+      gd.done = true; renderGD(); return false;
+    }
+    setMsg(J(gd.a) > J(gd.path[gd.path.length - 2]) + 1e-9 ? '⚠️ 이번 걸음에서 손실이 <b>커졌어요!</b> 너무 멀리 뛰었나 봐요.' : '');
+    renderGD();
+    return true;
+  };
+  const resetGD = (start = START) => { stop(); START = start; store.gdStart = start; persist(); gd = { a: start, n: 0, path: [start], log: [], done: false, out: false }; setMsg(''); renderGD(); };
+  document.getElementById('gdStep').addEventListener('click', () => { stop(); oneStep(); });
+  runBtn.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (gd.done || gd.out) resetGD(gd.path[0]);
+    runBtn.textContent = '⏸ 멈추기';
+    timer = setInterval(() => { if (!oneStep()) stop(); }, 450);
+  });
+  document.getElementById('gdReset').addEventListener('click', () => resetGD(gd.path[0]));
+  document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => resetGD(+b.dataset.start)));
+  lr.addEventListener('input', renderGD);
+  lr.addEventListener('change', () => { store.lastLr2 = +lr.value; persist(); });
+  fog.addEventListener('change', renderGD);
+  plusMode.addEventListener('change', () => resetGD(gd.path[0]));
+  gdCv.addEventListener('pointerdown', e => { const [a] = toPlot(gdCv, e, JR.ar, JR.lr); resetGD(Math.max(0.1, Math.min(9.9, Math.round(a * 10) / 10))); });
+  // 1단계 그림: 같은 예시 곡선에 안개
+  const renderGdWhy = () => {
+    const cv = document.getElementById('gdWhy'), w = 360, h = 250, fogOn = document.getElementById('gdWhyFog').checked;
+    const x = prep(cv, w, h), pad = { l: 34, r: 12, t: 12, b: 34 };
+    const g = frame(x, w, h, [0, 10], [0, 9], [], [], 'a (예시 곡선)', '손실', pad), { px, py } = g;
+    const a0 = 2.8, s0 = jSlope(a0);
+    g.clip();
+    curve(x, px, py, J, 0, 10, '#94a3b8', 3);
+    if (fogOn) {
+      const L0 = px(a0 - 0.9), R0 = px(a0 + 0.9), fogC = 'rgba(226,232,240,.95)';
+      let gr = x.createLinearGradient(L0 - 20, 0, L0, 0); gr.addColorStop(0, fogC); gr.addColorStop(1, 'rgba(226,232,240,0)');
+      x.fillStyle = fogC; x.fillRect(0, 0, L0 - 20, h); x.fillStyle = gr; x.fillRect(L0 - 20, 0, 20, h);
+      gr = x.createLinearGradient(R0, 0, R0 + 20, 0); gr.addColorStop(0, 'rgba(226,232,240,0)'); gr.addColorStop(1, fogC);
+      x.fillStyle = gr; x.fillRect(R0, 0, 20, h); x.fillStyle = fogC; x.fillRect(R0 + 20, 0, w, h);
+    } else VALLEYS.forEach(t => dot(x, px(t), py(J(t)), 5, COL.move));
+    curve(x, px, py, u => J(a0) + s0 * (u - a0), a0 - 0.7, a0 + 0.7, COL.slope, 3);
+    x.restore();
+    dot(x, px(a0), py(J(a0)), 8, COL.mine);
+    label(x, '지금 위치', px(a0), py(J(a0)) - 14, COL.mine, 'center', '800 12.5px Pretendard, sans-serif');
+    if (fogOn) label(x, '? 바닥은 어디일까', px(7), py(4.5), '#475569', 'center', '800 14px Pretendard, sans-serif');
+    else label(x, '◆ 골짜기가 여러 개!', px(7.4), py(8.2), COL.move, 'center', '800 13px Pretendard, sans-serif');
+    document.getElementById('gdWhyCap').innerHTML = fogOn
+      ? '🌫️ 인공지능에게는 지금 위치 주변만 보여요. 아는 건 <b>기울기</b>뿐!'
+      : '안개를 걷으면: 이차함수처럼 매끈하지 않고 <b>울퉁불퉁</b>해요. 꼭짓점 공식을 쓸 수 없어요.';
+  };
+  document.getElementById('gdWhyFog').addEventListener('change', renderGdWhy);
+  // 2단계: 기울기의 부호로 방향 정하기
+  const dirA = document.getElementById('dirA');
+  const renderDir = () => {
+    const a = +dirA.value, s = jSlope(a);
+    document.getElementById('dirAo').textContent = f1(a);
+    drawGD(document.getElementById('gdDir'), { a, eta: Math.min(0.4, 0.8 / Math.max(Math.abs(s), 0.01)), fogOn: false, path: [a], moveLabel: s < 0 ? '이쪽으로 →' : '← 이쪽으로' });
+    const dir = s < -0.05 ? '<b class="c-neg">−</b> → 오른쪽이 내리막 → <b class="c-move">a를 키워요 →</b>' : s > 0.05 ? '<b class="c-pos">+</b> → 왼쪽이 내리막 → <b class="c-move">← a를 줄여요</b>' : '거의 <b>0</b> → 골짜기 바닥이에요!';
+    document.getElementById('dirCalc').innerHTML = `<b>a = ${f1(a)}</b>에서 기울기<br>
+      <span class="mono">L′(${f1(a)}) ≈ (L(${f1(a)} + 0.01) − L(${f1(a)})) ÷ 0.01 = <b class="c-slope">${sg(s)}</b></span><br>
+      <span class="small muted">(평균 변화율 ≈ 미분계수)</span><br>기울기 ${dir}`;
+  };
+  dirA.addEventListener('input', renderDir);
+  renderers.gd = () => { renderGdWhy(); renderDir(); renderGD(); };
+
+  /* ===== 4. 정리 그림 ===== */
+  const renderSummary = () => {
+    const sw = 300, sh = 190;
+    drawData(document.getElementById('sum1'), { lines: [{ m: { a: SY }, color: COL.sy }], err: { a: SY }, w: sw, h: sh, small: true });
+    // ② 손실: 손실이 큰 직선(a = 8)과 작은 직선(a = 15)을 함께
+    const g2 = drawData(document.getElementById('sum2'), { lines: [{ m: { a: 8 }, color: '#94a3b8', dash: true, width: 2 }, { m: { a: 15 }, color: COL.mine }], err: { a: 15 }, w: sw, h: sh, small: true });
+    const x2 = document.getElementById('sum2').getContext('2d');
+    label(x2, `a = 15 → L = ${f2(loss(15))}`, sw - 14, 26, COL.mine, 'right', '800 12.5px Pretendard, sans-serif');
+    label(x2, `a = 8 → L = ${f2(loss(8))}`, sw - 14, 46, '#64748b', 'right', '800 12.5px Pretendard, sans-serif');
+    const c = document.getElementById('sum3'), x = prep(c, sw, sh), pad = { l: 20, r: 10, t: 10, b: 20 };
+    const g = frame(x, sw, sh, [0, 30], [0, 100], [], [], '', '', pad); const { px, py } = g;
+    curve(x, px, py, loss, 0, 30, COL.loss, 2.5);
+    dot(x, px(A_BEST), py(L_BEST), 6, COL.move); label(x, `꼭짓점 a ≈ ${f1(A_BEST)}`, px(A_BEST), py(L_BEST) - 10, COL.move, 'center', '800 12px Pretendard, sans-serif');
+  };
+  const renderSummary2 = () => {
+    const sw = 300, sh = 190, pad = { l: 20, r: 10, t: 10, b: 20 };
+    const mini = id => { const x = prep(document.getElementById(id), sw, sh); return { x, ...frame(x, sw, sh, [0, 10], [0, 9], [], [], '', '', pad) }; };
+    // ① 방향: 접선과 화살표
+    let { x, px, py } = mini('s2a'); curve(x, px, py, J, 0, 10, '#94a3b8', 2.5);
+    [[1.8, 1], [4.6, -1]].forEach(([a0]) => { const s0 = jSlope(a0); curve(x, px, py, u => J(a0) + s0 * (u - a0), a0 - 0.6, a0 + 0.6, COL.slope, 2.5); dot(x, px(a0), py(J(a0)), 5, COL.mine); arrow(x, px(a0), py(0) - 10, px(a0 + (s0 < 0 ? 0.9 : -0.9)), py(0) - 10, COL.move, 2.5); });
+    // ② 한 걸음씩
+    ({ x, px, py } = mini('s2b')); curve(x, px, py, J, 0, 10, '#94a3b8', 2.5);
+    let a = 5.2; const pts = [a]; for (let k = 0; k < 4; k++) { a -= 0.1 * jSlope(a); pts.push(a); }
+    pts.slice(0, -1).forEach((p, k) => arrow(x, px(p), py(J(p)), px(pts[k + 1]), py(J(pts[k + 1])), COL.move, 2.5));
+    pts.forEach(p => dot(x, px(p), py(J(p)), 4.5, COL.mine));
+    // ③ 보폭이 크면 출렁임
+    ({ x, px, py } = mini('s2c')); curve(x, px, py, J, 0, 10, '#94a3b8', 2.5);
+    a = 1.8; const big = [a]; for (let k = 0; k < 5; k++) { a -= 0.8 * jSlope(a); if (a < 0 || a > 10) break; big.push(a); }
+    big.slice(0, -1).forEach((p, k) => arrow(x, px(p), py(J(p)), px(big[k + 1]), py(J(big[k + 1])), COL.pos, 2));
+    big.forEach(p => dot(x, px(p), py(J(p)), 4, COL.pos));
+  };
+  const renderRv2 = () => {
+    drawLoss(document.getElementById('rv2Chart'), { ball: A_BEST, marks: [{ a: A_BEST, color: COL.move, name: `꼭짓점 (${f2(A_BEST)}, ${f2(L_BEST)})` }] });
+    document.getElementById('rv2A').textContent = f2(A_BEST);
+  };
+  renderers.rev2 = renderRv2;
+
+  /* ===== 결과 이미지: 데이터+직선 / 손실 그래프+지나온 길 ===== */
+  const finalRun = () => ({ a: A_BEST, path: [] });
+  const resultCanvas = () => {
+    if (LESSON === 2) {
+      const c = MF.makeCanvas(W, HT);
+      drawGD(c, { a: gd.a, eta: 0, fogOn: false, path: gd.path, valleys: true, dpr: 1 });
+      return c;
+    }
+    const { a, path } = finalRun();
+    const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
+    drawData(c1, { lines: [{ m: { a }, color: COL.mine, name: `a = ${f2(a)}` }], err: { a }, dpr: 1 });
+    drawLoss(c2, { ball: a, marks: [{ a: A_BEST, color: COL.move, name: `꼭짓점 (${f2(A_BEST)}, ${f2(L_BEST)})` }], dpr: 1 });
+    const c = MF.makeCanvas(W * 2 + 20, HT), x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+    x.drawImage(c1, 0, 0); x.drawImage(c2, W + 20, 0);
+    return c;
+  };
+
+  /* ===== 활동지 ===== */
+  const ws = MF.worksheet(LESSON === 2 ? {
+    lesson: 2, title: '경사하강법과 데이터 선정',
+    resultTitle: '오늘의 탐구 결과', hideAttach: true,
+    intro: '필수 기록 3개를 쓰고 이미지로 저장해서 카카오톡에 올려요. 화면마다 쓴 답, 경사하강법 실험 기록이 자동으로 함께 담겨요. 탐구 보고서의 두 번째 장이 돼요.',
+    req: [
+      ['오늘 가장 인상 깊었던 수학 원리', '기울기의 부호로 방향 정하기, 식의 빼기(−), 보폭에 따른 변화 등에서 가장 인상 깊었던 것과 그 이유를 써 주세요.'],
+      ['경사하강법을 내 말로 설명하기', '수업을 듣지 않은 친구에게 설명하듯 써 주세요. 안개 낀 산 같은 비유를 써도 좋아요.'],
+      ['가장 잘 이해한 부분', '오늘 수업에서 가장 잘 이해한 부분을 자유롭게 써 주세요. 왜 잘 이해됐는지도 함께 써도 좋아요.']
+    ],
+    compact: {
+      summary: () => [
+        ['수업', 'AI교과융합 캠프 「손실함수와 경사하강법을 활용한 데이터 최적화」 2차시 · 경사하강법과 데이터 선정'],
+        ['활동 내용', '기울기(미분계수)의 부호로 이동 방향을 정하는 원리를 이해하고, 경사하강법 a(n+1) = a(n) − η × L′(a(n))으로 골짜기가 여러 개인 손실 곡선을 탐색함. 보폭(학습률)과 출발 위치를 바꾸며 수렴, 진동, 손실 증가를 비교함.'],
+        ['실험 기록', runList().join(' / ')]
+      ]
+    },
+    getResult: () => {
+      const runs = runList();
+      return { canvas: resultCanvas(), lines: [
+        ['경사하강법 식', 'a(n+1) = a(n) − η × L′(a(n))'],
+        ['경사하강법 실험 (자동 기록, 예시 곡선)', runs.length ? runs.join(' / ') : '기록 없음']
+      ] };
+    }
+  } : {
+    lesson: 1, title: '데이터 최적화와 손실함수',
+    resultTitle: '오늘의 탐구 결과', hideAttach: true,
+    intro: '필수 기록 3개를 쓰고 이미지로 저장해서 카카오톡에 올려요. 화면마다 쓴 답, 진로 조사, 탐구 결과 그래프가 자동으로 함께 담겨요. 이 활동지가 탐구 보고서의 첫 장이 돼요.',
+    req: [
+      ['오늘 가장 인상 깊었던 수학 원리', '오차를 제곱하는 이유, 손실이 a에 대한 이차함수가 되는 이유, 꼭짓점 찾기 등에서 가장 인상 깊었던 것과 그 이유를 써 주세요.'],
+      ['손실함수를 내 말로 설명하기', '수업을 듣지 않은 친구에게 설명하듯 써 주세요. 오차, 제곱, 평균이라는 낱말을 넣어 보세요.'],
+      ['가장 잘 이해한 부분', '오늘 수업에서 가장 잘 이해한 부분을 자유롭게 써 주세요. 왜 잘 이해됐는지도 함께 써도 좋아요.']
+    ],
+    compact: {
+      summary: () => [
+        ['수업', 'AI교과융합 캠프 「손실함수와 경사하강법을 활용한 데이터 최적화」 1차시 · 데이터 최적화와 손실함수'],
+        ['활동 내용', `자전거 이동 기록(8개)을 일차함수 y = ax로 근사함. 오차(실제 − 예측)를 제곱해 평균한 손실함수 L(a) = ${LFORM}을 유도하고, 손실이 기울기 a에 대한 이차함수임을 확인함. 꼭짓점을 구해 가장 잘 맞는 직선의 기울기 a ≈ ${f2(A_BEST)}를 찾음.`],
+        ['선수 학습 확인', preSummary()],
+        ['체감 난이도', svLevel.value]
+      ],
+      sections: () => [
+        ['진로와 관심', [['희망 진로', svCareer.value], ['관심 분야', svField.value === '기타' ? `기타: ${svFieldEtc.value}` : svField.value], ['좋아하는 과목', svSubject.value], ['수학 자신감', svMath.value], ['데이터로 알아보고 싶은 궁금증', svQuestion.value]]],
+        ['수업 후기', [['가장 어려웠던 부분', svHard.value], ['후기와 바라는 점', svReview.value]]]
+      ]
+    },
+    check: () => (!svCareer.value.trim() ? '4번 화면에서 희망 진로를 써 주세요.'
+      : !svLevel.value ? '4번 화면에서 오늘 수업의 체감 난이도를 골라 주세요.' : null),
+    getResult: () => {
+      const { a } = finalRun(), b = bestOfTrail(), runs = runList();
+      return {
+        canvas: resultCanvas(),
+        lines: [
+          ['선수 학습 확인', preSummary()],
+          ['데이터', '자전거 이동 기록 8개 (탄 시간 → 이동 거리)'],
+          ['찾은 규칙 (L(a)의 꼭짓점)', `이동 거리 ≈ ${f2(a)} × 탄 시간 (손실 ${lossLabel(loss(a))})`],
+          ['손실함수', `L(a) = ${LFORM} (꼭짓점 a ≈ ${f2(A_BEST)})`],
+          ['손실 그래프에서 내가 찾은 가장 작은 손실', b == null ? '기록 없음' : `a = ${f1(b)}일 때 ${lossLabel(loss(b))}`]
+        ]
+      };
+    },
+    records: () => ({
+      '선수 학습': preRecords(),
+      '진로·후기': [
+        ['희망 진로', svCareer.value], ['관심 분야', svField.value === '기타' ? `기타: ${svFieldEtc.value}` : svField.value], ['좋아하는 과목', svSubject.value],
+        ['수학 자신감', svMath.value], ['데이터로 알아보고 싶은 궁금증', svQuestion.value], ['체감 난이도', svLevel.value], ['가장 어려웠던 부분', svHard.value], ['수업 후기와 바라는 점', svReview.value]
+      ]
+    })
+  });
+  const [svCareer, svField, svFieldEtc, svSubject, svMath, svQuestion, svLevel, svHard, svReview] = ['svCareer', 'svField', 'svFieldEtc', 'svSubject', 'svMath', 'svQuestion', 'svLevel', 'svHard', 'svReview'].map(id => document.getElementById(id));
+  [[svCareer, 'career'], [svField, 'field'], [svSubject, 'subject'], [svMath, 'math'], [svQuestion, 'question'], [svFieldEtc, 'fieldEtc'], [svLevel, 'level'], [svHard, 'hard'], [svReview, 'review']].forEach(([el, k]) => ws.bind(el, k));
+  const syncEtc = () => { svFieldEtc.style.display = svField.value === '기타' ? '' : 'none'; };
+  svField.addEventListener('change', syncEtc); svField.addEventListener('input', syncEtc); syncEtc();
+  renderers.sum1 = () => { renderSummary(); ws.refresh(); };
+  renderers.sum2l = () => { renderSummary2(); ws.refresh(); };
+
+  /* ===== 탭 안의 단계 넘기기 =====
+   * <div class="sub" data-sub="이름"> 들을 한 장씩 보여 준다. 위아래에 같은 버튼을 둔다.
+   */
+  const setupSubs = (screen, key, onShow) => {
+    const subs = [...screen.querySelectorAll('.sub')], top = screen.querySelector('[data-subnav]');
+    const navHTML = `<div class="sub-pills">${subs.map((sb, i) => `<button data-i="${i}">${i + 1}. ${sb.dataset.sub}</button>`).join('')}</div>
+      <div class="sub-btns"><button class="btn" data-sp>← 이전 단계</button><span class="small muted" data-sc></span><button class="btn primary" data-sn>다음 단계 →</button></div>`;
+    top.innerHTML = navHTML;
+    let cur = Math.min(store[key] || 0, subs.length - 1);
+    const show = i => {
+      cur = Math.max(0, Math.min(subs.length - 1, i)); store[key] = cur; persist();
+      subs.forEach((sb, k) => sb.classList.toggle('on', k === cur));
+      top.querySelectorAll('[data-i]').forEach((b, k) => { b.classList.toggle('on', k === cur); b.classList.toggle('done', k < cur); });
+      [top].forEach(n => {
+        n.querySelector('[data-sp]').disabled = cur === 0;
+        n.querySelector('[data-sn]').textContent = cur === subs.length - 1 ? '다음 탭으로 →' : '다음 단계 →';
+        n.querySelector('[data-sc]').textContent = `${cur + 1} / ${subs.length} 단계`;
+      });
+      if (onShow) onShow(cur);
+    };
+    [top].forEach(n => n.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.i != null) show(+b.dataset.i);
+      else if (b.hasAttribute('data-sp')) { show(cur - 1); top.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      else if (b.hasAttribute('data-sn')) { if (cur === subs.length - 1) document.getElementById('nextBtn').click(); else { show(cur + 1); top.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+    }));
+    show(cur);
+  };
+  setupSubs(document.querySelector('[data-key="loss"]'), 'lossSub');
+  // 경사하강법 탭: 3·4단계는 같은 실험 장치를 쓰므로, 보이는 단계로 옮겨 붙인다
+  const gdSim = document.getElementById('gdSim');
+  setupSubs(document.querySelector('[data-key="gd"]'), 'gdSub', i => {
+    const slot = document.querySelector(`[data-simslot="${i}"]`);
+    if (slot) slot.append(gdSim);
+    gdSim.style.display = slot ? "" : "none";
+    renderGdWhy(); renderDir(); renderGD();
+  });
+
+  /* ===== 시작 ===== */
+  renderers.big(); renderers.loss(); renderers.gd();
+  MF.wizard({ onShow: (i, sc) => renderers[sc.dataset.key]?.() });
+})();
+</script>
+</body>
+</html>

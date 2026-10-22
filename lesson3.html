@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3차시 데이터 최적화 실습 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="assets/common.css">
+<link rel="stylesheet" href="assets/theme.css?v=20261023">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">∇</span>AI 융합캠프(조민기)</a>
+    <nav class="lesson-nav">
+      <a href="index.html">홈</a>
+      <a href="lesson1.html">1차시</a>
+      <a href="lesson2.html">2차시</a>
+      <a href="lesson3.html" class="on">3차시</a>
+      <a href="lesson4.html">4차시</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="lesson-head">
+    <span class="eyebrow">3차시</span>
+    <h1>데이터 최적화 실습 1</h1>
+    <span class="lesson-date">11/6(금)</span>
+  </div>
+  <ol class="stepper" id="stepper"></ol>
+
+  <!-- 1. 도입 -->
+  <section class="screen" data-title="도입">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div><h2>도입</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
+      </div>
+      <div class="placeholder-grid">
+        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
+        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
+      </div>
+      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
+    </div>
+  </section>
+  <!-- 2. 활동 1 -->
+  <section class="screen" data-title="활동 1">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div><h2>활동 1</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
+      </div>
+      <div class="placeholder-grid">
+        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
+        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
+      </div>
+      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
+    </div>
+  </section>
+  <!-- 3. 활동 2 -->
+  <section class="screen" data-title="활동 2">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div><h2>활동 2</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
+      </div>
+      <div class="placeholder-grid">
+        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
+        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
+      </div>
+      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
+    </div>
+  </section>
+
+  <!-- 4. 정리·제출 -->
+  <section class="screen" data-title="정리">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">✓</div>
+        <div><h2>오늘 배운 것</h2><p>오늘 활동을 잘 이해했는지 질문에 답하고, 활동지를 제출해요.</p></div>
+      </div>
+      <div class="box key" style="margin-bottom:16px">
+        <p>오늘 배운 핵심 내용이 들어갈 자리예요.</p>
+      </div>
+      <ol class="think">
+        <li data-hint="힌트 1|힌트 2">(정리 질문 1 준비 중)</li>
+        <li data-hint="힌트 1|힌트 2">(정리 질문 2 준비 중)</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="pager">
+    <button class="btn" id="prevBtn">← 이전</button>
+    <span class="count" id="pageCount"></span>
+    <button class="btn primary" id="nextBtn">다음 →</button>
+  </div>
+</main>
+
+<script src="assets/common.js?v=20261023"></script>
+<script>
+(() => {
+  const renderers = {};
+  /* ===== 활동지 ===== */
+  const ws = MF.worksheet({
+    lesson: 3, title: '데이터 최적화 실습 1',
+    q1hint: '오늘 활동에서 가장 인상 깊었던 수학 원리와 그 이유를 써 주세요.',
+    q2: '오늘 내가 다룬 데이터(또는 결과)를 설명해 주세요.',
+    getResult: () => ({})
+  });
+  renderers[document.querySelectorAll('.screen').length - 1] = ws.refresh;
+  /* ===== 시작 ===== */
+  const wiz = MF.wizard({ onShow: i => renderers[i]?.() });
+})();
+</script>
+</body>
+</html>

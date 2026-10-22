@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터 최적화 연구소</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="assets/common.css">
+<link rel="stylesheet" href="assets/theme.css?v=20261023">
+<style>
+  .hero-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center; }
+  @media (max-width: 860px) { .hero-split { grid-template-columns: 1fr; } }
+  .hero-graph { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; }
+  .hero-graph svg { width: 100%; height: auto; display: block; }
+  .lesson-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 10px 0 30px; }
+  .lesson-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: hidden; text-decoration: none; color: var(--ink); display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s;
+  }
+  a.lesson-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(31,29,46,.12); }
+  .lesson-card .thumb { aspect-ratio: 16 / 9; background: var(--grad); position: relative; display: grid; place-items: center; color: #fff; font-size: 44px; }
+  .lesson-card .thumb .no { position: absolute; left: 12px; top: 12px; background: rgba(255,255,255,.92); color: var(--ink); padding: 3px 10px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+  .lesson-card .body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; }
+  .lesson-card h3 { font-size: 19px; margin-bottom: 6px; }
+  .lesson-card p { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+  .lesson-card.soon { opacity: .6; }
+  .info-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .info { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; }
+  .info h3 { font-size: 17px; margin-bottom: 8px; }
+  .info p, .info li { color: var(--muted); font-size: 15px; }
+  .info ol { padding-left: 20px; margin: 0; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">∇</span>AI 융합캠프(조민기)</a>
+    <nav class="lesson-nav">
+      <a href="index.html" class="on">홈</a>
+      <a href="lesson1.html">1차시</a>
+      <a href="lesson2.html">2차시</a>
+      <a href="lesson3.html">3차시</a>
+      <a href="lesson4.html">4차시</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero hero-split">
+    <div>
+      <span class="eyebrow">손실함수와 경사하강법을 활용한 데이터 최적화</span>
+      <h1>인공지능은 어떻게<br><span class="grad-text">배울까?</span></h1>
+      <p class="lead">손실함수와 경사하강법으로 인공지능의 학습 원리를 이해하고, 내가 고른 데이터를 직접 다뤄 보며 최적화해 봅시다.</p>
+    </div>
+    <div class="hero-graph" aria-label="손실함수 그래프 위를 공이 굴러 내려가는 그림">
+      <!-- 손실함수(포물선)를 따라 최솟값으로 내려가는 경사하강법 그림 -->
+      <svg viewBox="0 0 400 270" role="img">
+        <defs>
+          <linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#0ea5a4"/><stop offset=".55" stop-color="#2563eb"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+        </defs>
+        <line x1="30" y1="240" x2="385" y2="240" stroke="#c9d3e6" stroke-width="2"/>
+        <line x1="30" y1="240" x2="30" y2="15" stroke="#c9d3e6" stroke-width="2"/>
+        <text x="372" y="260" font-size="13" fill="#6b6880">a</text>
+        <text x="8" y="26" font-size="13" fill="#6b6880">L(a)</text>
+        <path d="M45 40 Q 210 400 375 40" fill="none" stroke="url(#lg)" stroke-width="4"/>
+        <path d="M94.5 131.8 L127.5 175 L160.4 203.8 L183.6 215.4" fill="none" stroke="#0ea5a4" stroke-width="2" stroke-dasharray="4 4"/>
+        <g fill="#2563eb">
+          <circle cx="94.5" cy="131.8" r="7" opacity=".25"/>
+          <circle cx="127.5" cy="175" r="7" opacity=".45"/>
+          <circle cx="160.4" cy="203.8" r="7" opacity=".65"/>
+          <circle cx="183.6" cy="215.4" r="8" opacity=".85"/>
+        </g>
+        <circle cx="210" cy="220" r="9" fill="#7c3aed"/>
+        <line x1="210" y1="232" x2="210" y2="240" stroke="#7c3aed" stroke-width="2"/>
+        <text x="210" y="258" font-size="13" fill="#4a4763" text-anchor="middle">최솟값</text>
+        <text x="58" y="78" font-size="13" fill="#0b7f7b">a ← a − η·L′(a)</text>
+      </svg>
+    </div>
+  </section>
+
+  <h2 style="font-size:22px;margin:10px 0 14px">수업 계획</h2>
+  <div class="lesson-grid">
+    <a class="lesson-card" href="lesson1.html">
+      <div class="thumb">📉<span class="no">1차시 · 10/23</span></div>
+      <div class="body"><h3>데이터 최적화와 손실함수</h3><p>자전거 기록에 맞는 직선을 찾으며 손실함수 L(a)를 만들고, 꼭짓점으로 가장 잘 맞는 직선을 찾아요. 나의 진로도 알려 줘요.</p></div>
+    </a>
+    <a class="lesson-card" href="lesson2.html">
+      <div class="thumb">📊<span class="no">2차시 · 10/30</span></div>
+      <div class="body"><h3>경사하강법과 데이터 선정</h3><p>식을 몰라도 기울기만 보고 손실이 작은 곳을 찾는 경사하강법을 실험하고, 나의 데이터를 골라요.</p></div>
+    </a>
+    <a class="lesson-card" href="lesson3.html">
+      <div class="thumb">⚙️<span class="no">3차시 · 11/6</span></div>
+      <div class="body"><h3>데이터 최적화 실습 1</h3><p>준비 중</p></div>
+    </a>
+    <a class="lesson-card" href="lesson4.html">
+      <div class="thumb">📝<span class="no">4차시 · 11/13</span></div>
+      <div class="body"><h3>데이터 최적화 실습 2 및 탐구 보고서</h3><p>준비 중</p></div>
+    </a>
+  </div>
+
+  <div class="info-grid">
+    <div class="info">
+      <h3>🔑 진행 상황은 코드로 저장해요</h3>
+      <p>컴퓨터를 껐다 켜도 이어서 할 수 있도록, 내가 고른 데이터와 최적화 결과를 짧은 코드로 저장해요. (준비 중)</p>
+    </div>
+    <div class="info">
+      <h3>📷 활동지는 이미지로 제출해요</h3>
+      <p>차시 마지막 화면에서 활동지를 이미지로 저장해 카카오톡에 올려요.</p>
+    </div>
+    <div class="info">
+      <h3>🧭 이렇게 활용해요</h3>
+      <ol>
+        <li>[다음 →] 버튼으로 화면을 하나씩 넘겨요.</li>
+        <li>화면마다 질문 아래 메모 칸에 내 생각을 적어요.</li>
+        <li>마지막 화면에서 활동지를 이미지로 저장해 제출해요.</li>
+      </ol>
+    </div>
+  </div>
+</main>
+
+<footer>AI 융합캠프 · 손실함수와 경사하강법을 활용한 데이터 최적화</footer>
+<script src="assets/common.js?v=20261023"></script>
+</body>
+</html>

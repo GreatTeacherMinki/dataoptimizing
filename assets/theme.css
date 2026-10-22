@@ -1,0 +1,31 @@
+/* 데이터 최적화 캠프 색상 (행렬 필터 사이트와 같은 틀, 색만 다르게) */
+:root {
+  --accent: #2563eb;
+  --pink: #0e9f9a;
+  --orange: #7c3aed;
+  --soft: #eef4ff;
+  --grad: linear-gradient(120deg, #0ea5a4 0%, #2563eb 55%, #7c3aed 100%);
+}
+.eyebrow { color: #0b7f7b; background: #dff7f5; }
+.lesson-nav a.on { background: #1e3a8a; }
+
+/* 내용 준비 중 자리 표시 */
+.placeholder {
+  border: 2px dashed #c7d5f5; border-radius: 14px; padding: 28px 20px; text-align: center;
+  color: var(--muted); background: #f8fbff; font-size: 15px;
+}
+.placeholder b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
+.placeholder-grid { display: grid; gap: 14px; grid-template-columns: 1.4fr 1fr; }
+@media (max-width: 860px) { .placeholder-grid { grid-template-columns: 1fr; } }
+.lesson-date { font-size: 13px; color: var(--muted); font-weight: 600; margin-left: 4px; }
+
+/* 활동지: 결과물을 목록으로 보여 줄 때 */
+.ws-line { font-size: 14px; margin: 3px 0; }
+#wsPrint .wp-wide { width: 100%; border: 1px solid #ddd; border-radius: 6px; margin: 4px 0 8px; }
+#wsPrint .wp-line { font-size: 13px; margin: 3px 0; }
+.ws-attach:has(.ws-line) { grid-template-columns: 1fr; }
+
+/* 활동 기록(생기부 참고용) 표 */
+#wsPrint .wp-tbl { width: 100%; border-collapse: collapse; margin: 4px 0 6px; font-size: 13px; }
+#wsPrint .wp-tbl th { width: 26%; text-align: left; vertical-align: top; background: #f5f6fb; padding: 7px 10px; border: 1px solid #e3e5ee; font-weight: 700; }
+#wsPrint .wp-tbl td { padding: 7px 10px; border: 1px solid #e3e5ee; line-height: 1.6; white-space: pre-wrap; }
