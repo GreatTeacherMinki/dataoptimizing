@@ -283,6 +283,9 @@ textarea.code, input.code { font-family: var(--mono); }
 .ws-req { margin-top: 14px; }
 .ws-req-t { font-weight: 800; font-size: 16px; }
 .ws-req-in { margin-top: 6px; font-size: 15px; resize: vertical; }
+.ws-step { margin-top: 10px; }
+.ws-step-t { font-weight: 700; font-size: 14px; }
+.ws-step .ws-req-in { margin-top: 4px; }
 .ws-count { font-size: 12px; color: var(--warn); text-align: right; margin-top: 2px; }
 .ws-count.ok { color: var(--ok); }
 .ws-attach { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: start; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 14px; }

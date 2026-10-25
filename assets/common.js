@@ -624,7 +624,26 @@
       inp.value = ident[inp.dataset.id] || '';
       inp.addEventListener('input', () => { ident[inp.dataset.id] = inp.value; write(ID_KEY, ident); });
     });
-    REQ.forEach((_, k) => block.querySelector(`[data-slot="${k}"]`).append(box('r' + k, 4, '', 'ws-req-in')));
+    // 필수 기록의 세 번째 값이 [[단계 이름, 예시 문장], ...]이면 단계별 칸으로 나눠 쓴다.
+    // 단계 답을 모아 'r' + k에 '단계 이름: 답' 줄로 저장해서, 저장·제출 쪽은 그대로 쓴다.
+    REQ.forEach(([, , steps], k) => {
+      const slot = block.querySelector(`[data-slot="${k}"]`);
+      if (!steps) { slot.append(box('r' + k, 4, '', 'ws-req-in')); return; }
+      const join = () => {
+        data['r' + k] = steps.map(([n], j) => { const v = (data[`r${k}_${j}`] || '').trim(); return v ? `${n}: ${v}` : ''; }).filter(Boolean).join('\n');
+        save();
+      };
+      steps.forEach(([n, ph], j) => {
+        const row = document.createElement('div');
+        row.className = 'ws-step';
+        row.innerHTML = `<div class="ws-step-t">${n}</div>`;
+        const ta = box(`r${k}_${j}`, 2, ph, 'ws-req-in');
+        ta.addEventListener('input', join);
+        row.append(ta);
+        slot.append(row);
+      });
+      join();
+    });
 
     // 선택 기록: 같은 기록에 연결된 입력칸끼리는 내용을 맞춰 준다
     const bound = {};
@@ -675,8 +694,15 @@
     block.querySelector('[data-pdf]').addEventListener('click', () => {
       const no = (ident.no || '').trim(), name = (ident.name || '').trim();
       if (!no || !name) { MF.toast('학번과 이름을 먼저 써 주세요.'); block.querySelector(no ? '[data-id="name"]' : '[data-id="no"]').focus(); return; }
-      const short = REQ.findIndex((_, k) => (data['r' + k] || '').trim().length < MIN);
-      if (short >= 0) { MF.toast(`필수 ${short + 1}번을 써 주세요.`); block.querySelector(`[data-slot="${short}"] textarea`).focus(); return; }
+      const emptyAt = ([, , steps], k) => steps
+        ? steps.findIndex((_, j) => (data[`r${k}_${j}`] || '').trim().length < MIN)
+        : ((data['r' + k] || '').trim().length < MIN ? 0 : -1);
+      const short = REQ.findIndex((r, k) => emptyAt(r, k) >= 0);
+      if (short >= 0) {
+        const j = emptyAt(REQ[short], short);
+        MF.toast(REQ[short][2] ? `필수 ${short + 1}번의 「${REQ[short][2][j][0]}」 칸을 써 주세요.` : `필수 ${short + 1}번을 써 주세요.`);
+        block.querySelectorAll(`[data-slot="${short}"] textarea`)[j].focus(); return;
+      }
       const problem = check && check();
       if (problem) { MF.toast(problem); return; }
       const s = snapshot(), today = new Date();
