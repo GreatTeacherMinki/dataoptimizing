@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3차시 데이터 최적화 실습 1</title>
+<title>3차시 내 데이터 최적화하기</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/common.css?v=20261025d">
+<link rel="stylesheet" href="assets/common.css?v=20261025e">
 <link rel="stylesheet" href="assets/theme.css?v=20261023">
+<link rel="stylesheet" href="assets/lesson.css?v=20261025e">
 </head>
 <body>
 <header class="topbar">
@@ -25,67 +26,140 @@
 <main class="wrap">
   <div class="lesson-head">
     <span class="eyebrow">3차시</span>
-    <h1>데이터 최적화 실습 1</h1>
+    <h1>내 데이터 최적화하기</h1>
     <span class="lesson-date">11/6(금)</span>
   </div>
   <ol class="stepper" id="stepper"></ol>
 
-  <!-- 1. 도입 -->
-  <section class="screen" data-title="도입">
+  <!-- 1. 주제 확인 -->
+  <section class="screen" data-title="주제 확인">
     <div class="step">
       <div class="step-head">
         <div class="step-num">1</div>
-        <div><h2>도입</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
+        <div><h2>내 탐구 주제 다시 보기</h2><p>2차시에 고른 주제로 오늘 <b>가장 잘 맞는 직선 y = ax</b>를 찾아요. 주제가 선택되어 있지 않으면 다시 골라 주세요.</p></div>
+        <span class="step-time">5분</span>
       </div>
-      <div class="placeholder-grid">
-        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
-        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
+      <div class="case-btns" id="caseBtns"></div>
+      <div class="cols wide-left" style="margin-top:14px" id="introBody">
+        <div><canvas id="introChart" class="chart"></canvas></div>
+        <div>
+          <div class="box key"><b>🔎 탐구 질문</b><p id="caseQ" style="margin-top:6px;font-size:17px;font-weight:700"></p></div>
+          <div class="box tip" style="margin-top:12px" id="prevGuess"></div>
+          <div class="box" style="margin-top:12px">
+            <b>오늘 할 일</b>
+            <ol class="simple" style="margin-top:6px;padding-left:20px">
+              <li>a를 직접 바꿔 보며 <b class="c-loss">손실</b> 보기</li>
+              <li><b>경사하강법</b>으로 손실이 가장 작은 a 찾기</li>
+              <li>찾은 a가 <b>내 주제에서 무슨 뜻</b>인지 해석하기</li>
+            </ol>
+          </div>
+        </div>
       </div>
-      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
-    </div>
-  </section>
-  <!-- 2. 활동 1 -->
-  <section class="screen" data-title="활동 1">
-    <div class="step">
-      <div class="step-head">
-        <div class="step-num">2</div>
-        <div><h2>활동 1</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
-      </div>
-      <div class="placeholder-grid">
-        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
-        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
-      </div>
-      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
-    </div>
-  </section>
-  <!-- 3. 활동 2 -->
-  <section class="screen" data-title="활동 2">
-    <div class="step">
-      <div class="step-head">
-        <div class="step-num">3</div>
-        <div><h2>활동 2</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
-      </div>
-      <div class="placeholder-grid">
-        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
-        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
-      </div>
-      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
+      <div id="introNone" class="placeholder" style="margin-top:14px"><b>👆 위에서 내 주제를 골라 주세요</b>2차시와 같은 주제를 고르면 돼요.</div>
     </div>
   </section>
 
-  <!-- 4. 정리·제출 -->
+  <!-- 2. 직선 맞추기 -->
+  <section class="screen" data-title="직선 맞추기">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div><h2>손으로 직선 맞추기</h2><p>슬라이더로 기울기 a를 바꿔 직선 <b>y = ax</b>를 점들에 맞춰 보세요. 세로 막대가 <b>오차</b>예요. 오차²의 평균이 <b class="c-loss">손실</b>이에요.</p></div>
+        <span class="step-time">12분</span>
+      </div>
+      <div class="cols wide-left">
+        <div>
+          <canvas id="fitChart" class="chart"></canvas>
+          <div class="slider-row" style="margin-top:8px"><label class="c-mine">a</label><input type="range" id="fitA"><output id="fitAo"></output></div>
+        </div>
+        <div>
+          <div class="stat-row">
+            <div class="stat"><small>기울기 a</small><span class="big-num c-mine" id="fitAv"></span></div>
+            <div class="stat"><small>손실</small><span class="big-num c-loss" id="fitL"></span></div>
+          </div>
+          <div class="btn-row" style="margin-top:10px"><button class="btn primary" id="fitRec">📍 이 a의 손실 기록하기</button><button class="btn" id="fitClear">기록 지우기</button></div>
+          <div class="matrix-label" style="margin-top:10px">기록한 a와 손실 <span class="muted" style="font-weight:500">(점 하나 = 기록 하나)</span></div>
+          <canvas id="trailChart" class="chart"></canvas>
+          <label class="toggle" style="margin-top:6px"><input type="checkbox" id="showCurve"> 손실 곡선 L(a) 보기</label>
+        </div>
+      </div>
+      <div class="screen-q" data-table="시도 1|시도 2|시도 3|손실이 가장 작았던 a" data-cols="a|손실" data-note="✏️ a를 바꿔 기록한 값을 적어요 · 활동지에 함께 저장돼요" data-hint="직선이 점들 사이를 고르게 지나가도록 a를 바꿔 보세요.|기록한 점들이 그릇 모양으로 놓이나요? 그릇의 바닥이 손실이 가장 작은 곳이에요.">🎯 미션: a를 세 번 이상 바꿔 손실 기록하기</div>
+    </div>
+  </section>
+
+  <!-- 3. 경사하강법 -->
+  <section class="screen" data-title="경사하강법">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div><h2>경사하강법으로 가장 좋은 a 찾기</h2><p>2차시에 배운 식으로 공을 굴려 <b class="c-loss">손실</b>이 가장 작은 a를 찾아요. 보폭을 바꿔 가며 세 번 실험해요.</p></div>
+        <span class="step-time">18분</span>
+      </div>
+      <div class="eq" style="margin-bottom:10px;font-size:20px"><span class="c-mine">a<sub>n+1</sub></span> = <span class="c-mine">a<sub>n</sub></span> − <span class="c-move">η</span> × <span class="c-slope">L′(a<sub>n</sub>)</span></div>
+      <div class="cols wide-left">
+        <div>
+          <canvas id="gdChart" class="chart"></canvas>
+          <div class="legend">
+            <span style="color:var(--c-mine)">● 지금 위치 (a)</span>
+            <span style="color:var(--c-slope)"><i></i>기울기 (접선)</span>
+            <span style="color:#fdba74">● 지나온 길</span>
+          </div>
+          <div class="matrix-label" style="margin-top:10px">지금 a로 그린 직선</div>
+          <canvas id="gdLine" class="chart"></canvas>
+        </div>
+        <div>
+          <div class="btn-row" style="margin-bottom:8px"><span class="small" style="font-weight:700">보폭 η</span>
+            <button class="btn sm" data-eta="s">작게</button><button class="btn sm" data-eta="m">알맞게</button><button class="btn sm" data-eta="b">크게</button>
+          </div>
+          <div class="small muted" id="etaInfo" style="margin-bottom:8px"></div>
+          <div class="btn-row">
+            <button class="btn primary" id="gdStep">👣 한 걸음</button>
+            <button class="btn" id="gdRun">▶ 자동으로</button>
+            <button class="btn" id="gdReset">↺ 처음으로</button>
+          </div>
+          <div class="stat-row">
+            <div class="stat"><small>걸음 수</small><span class="big-num" id="gdN">0</span></div>
+            <div class="stat"><small>a</small><span class="big-num c-mine" id="gdA"></span></div>
+            <div class="stat"><small>손실</small><span class="big-num c-loss" id="gdL"></span></div>
+          </div>
+          <div class="calc" id="gdCalc" style="margin-top:10px"></div>
+          <div class="gd-msg" id="gdMsg"></div>
+        </div>
+      </div>
+      <div class="screen-q" data-table="η 작게|η 알맞게|η 크게" data-cols="걸음 수|도착한 a|무슨 일이 있었나" data-note="✏️ 보폭마다 [↺ 처음으로] → [▶ 자동으로]를 누르고 결과를 적어요 · 활동지에 함께 저장돼요" data-hint="보폭 버튼을 누르면 처음 위치(a = 0)로 돌아가요.|η 크게에서는 공이 바닥을 사이에 두고 왔다 갔다 하는지 보세요.">🎯 미션: 보폭을 바꾸며 실험하기</div>
+    </div>
+  </section>
+
+  <!-- 4. a의 뜻 -->
+  <section class="screen" data-title="a의 뜻">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <div><h2>찾은 a는 무슨 뜻일까?</h2><p>a는 <b>x가 1 늘 때 y가 늘어나는 양</b>이에요. 내 주제의 말로 바꿔 보세요.</p></div>
+        <span class="step-time">8분</span>
+      </div>
+      <div class="cols wide-left">
+        <div><canvas id="meanChart" class="chart"></canvas></div>
+        <div>
+          <div class="box key" id="meanBox"></div>
+          <div class="box tip" style="margin-top:12px" id="meanPrev"></div>
+        </div>
+      </div>
+      <div class="screen-q" data-fields="a의 뜻::찾은 a를 내 주제의 말로 설명해요. :: ::'x가 1 늘면 y가 약 a만큼 늘어요'를 내 주제의 낱말과 단위로 바꿔 보세요.|2차시 짐작과 비교::2차시에 짐작한 기울기와 얼마나 비슷했나요? :: ::오른쪽 노란 상자에서 2차시 기록을 확인하세요.">🔍 내 주제의 말로 해석하기</div>
+    </div>
+  </section>
+
+  <!-- 5. 정리·제출 -->
   <section class="screen" data-title="정리">
     <div class="step">
       <div class="step-head">
         <div class="step-num">✓</div>
-        <div><h2>오늘 배운 것</h2><p>오늘 활동을 잘 이해했는지 질문에 답하고, 활동지를 제출해요.</p></div>
+        <div><h2>오늘 배운 것</h2><p>오늘 한 일을 정리하고, 활동지를 제출해요.</p></div>
+        <span class="step-time">7분</span>
       </div>
-      <div class="box key" style="margin-bottom:16px">
-        <p>오늘 배운 핵심 내용이 들어갈 자리예요.</p>
-      </div>
+      <div class="box key" style="margin-bottom:16px" id="sumBox"></div>
       <ol class="think">
-        <li data-hint="힌트 1|힌트 2">(정리 질문 1 준비 중)</li>
-        <li data-hint="힌트 1|힌트 2">(정리 질문 2 준비 중)</li>
+        <li data-hint="데이터의 x 범위를 보고, 그보다 훨씬 큰 x를 상상해 보세요.|비행기는 지구 반대편까지, 식물은 하루 24시간 빛, 관세는 아주 높게 오르면?">⭐ 다음 시간 예고: 데이터보다 훨씬 큰 x에서도 오늘 찾은 직선이 잘 맞을까요? 그렇게 생각한 이유는?</li>
       </ol>
     </div>
   </section>
@@ -97,20 +171,242 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025d"></script>
+<script src="assets/common.js?v=20261025e"></script>
 <script>
 (() => {
-  const renderers = {};
-  /* ===== 활동지 ===== */
-  const ws = MF.worksheet({
-    lesson: 3, title: '데이터 최적화 실습 1',
-    q1hint: '오늘 활동에서 가장 인상 깊었던 수학 원리와 그 이유를 써 주세요.',
-    q2: '오늘 내가 다룬 데이터(또는 결과)를 설명해 주세요.',
-    getResult: () => ({})
+  const CASES = MF.CASES;
+  const COL = { real: '#1e3a8a', pos: '#e11d48', neg: '#0891b2', mine: '#2563eb', loss: '#0e9f9a', slope: '#7c3aed', move: '#ea580c', trail: '#fdba74' };
+  const store = (() => { try { return JSON.parse(localStorage.getItem('do-l3')) || {}; } catch (e) { return {}; } })();
+  const persist = () => { try { localStorage.setItem('do-l3', JSON.stringify(store)); } catch (e) {} };
+  const $ = id => document.getElementById(id);
+
+  /* ===== 그래프 도우미 (1차시와 같은 모양) ===== */
+  const W = 520, HT = 340, P = { l: 62, r: 16, t: 14, b: 46 };
+  const prep = (cv, w = W, h = HT, dpr = 2) => { cv.width = w * dpr; cv.height = h * dpr; const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); return x; };
+  const niceTicks = (lo, hi, n = 5) => {
+    const raw = (hi - lo) / n, p = 10 ** Math.floor(Math.log10(raw)), st = [1, 2, 2.5, 5, 10].map(k => k * p).find(k => k >= raw);
+    const out = []; for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) out.push(Math.round(v * 1e6) / 1e6); return out;
+  };
+  const tickLbl = v => Math.abs(v) >= 1000 ? v.toLocaleString() : String(v);
+  const frame = (x, w, h, xr, yr, xl, yl, pad = P) => {
+    const px = v => pad.l + (v - xr[0]) / (xr[1] - xr[0]) * (w - pad.l - pad.r);
+    const py = v => h - pad.b - (v - yr[0]) / (yr[1] - yr[0]) * (h - pad.t - pad.b);
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+    x.strokeStyle = '#eef0f6'; x.lineWidth = 1; x.font = '12px Pretendard, sans-serif'; x.fillStyle = '#6b6880';
+    niceTicks(xr[0], xr[1], 6).filter(v => v >= xr[0] && v <= xr[1]).forEach(v => { x.beginPath(); x.moveTo(px(v), py(yr[0])); x.lineTo(px(v), py(yr[1])); x.stroke(); x.textAlign = 'center'; x.fillText(tickLbl(v), px(v), h - pad.b + 16); });
+    niceTicks(yr[0], yr[1], 5).filter(v => v >= yr[0] && v <= yr[1]).forEach(v => { x.beginPath(); x.moveTo(px(xr[0]), py(v)); x.lineTo(px(xr[1]), py(v)); x.stroke(); x.textAlign = 'right'; x.fillText(tickLbl(v), pad.l - 6, py(v) + 4); });
+    x.strokeStyle = '#9b97ad'; x.beginPath(); x.moveTo(px(xr[0]), py(yr[1])); x.lineTo(px(xr[0]), py(yr[0])); x.lineTo(px(xr[1]), py(yr[0])); x.stroke();
+    x.fillStyle = '#4b4860'; x.font = '600 13px Pretendard, sans-serif'; x.textAlign = 'center';
+    if (xl) x.fillText(xl, (pad.l + w - pad.r) / 2, h - 8);
+    if (yl) { x.textAlign = 'left'; x.font = '600 12.5px Pretendard, sans-serif'; x.fillText(yl, pad.l + 6, pad.t + 12); }
+    return { px, py, clip: () => { x.save(); x.beginPath(); x.rect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b); x.clip(); } };
+  };
+  const dot = (x, X0, Y0, r, c) => { x.fillStyle = c; x.beginPath(); x.arc(X0, Y0, r, 0, Math.PI * 2); x.fill(); };
+  const label = (x, text, tx, ty, color, align = 'left', font = '700 12.5px Pretendard, sans-serif') => {
+    x.font = font; x.textAlign = align; x.lineWidth = 3.5; x.strokeStyle = '#fff'; x.strokeText(text, tx, ty); x.fillStyle = color; x.fillText(text, tx, ty);
+  };
+
+  /* ===== 고른 주제의 데이터와 손실함수 =====
+   * L(a) = 오차²의 평균 = m2·a² − 2·mxy·a + my2 (이차함수), L′(a) = 2(m2·a − mxy)
+   */
+  let K = CASES[MF.getCase()] ? MF.getCase() : (CASES[store.case] ? store.case : '');
+  let C, m2, mxy, my2, A_BEST, A_MAX, dec;
+  const mean = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+  const loss = a => m2 * a * a - 2 * mxy * a + my2;
+  const dL = a => 2 * (m2 * a - mxy);
+  const fa = v => (Math.round(v * 10 ** dec) / 10 ** dec).toFixed(dec);
+  const fL = v => Math.abs(v) >= 1000 ? Math.round(v).toLocaleString() : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(3);
+  const fN = v => (v < 0 ? '−' : '') + fL(Math.abs(v));
+  const fEta = v => { const d = Math.max(2, Math.ceil(-Math.log10(v)) + 1); return v.toFixed(d); };
+  const setCase = k => {
+    K = k; C = CASES[k];
+    m2 = mean(C.x.map(x => x * x)); mxy = mean(C.x.map((x, i) => x * C.y[i])); my2 = mean(C.y.map(y => y * y));
+    A_BEST = mxy / m2;
+    const p = 10 ** Math.floor(Math.log10(A_BEST * 2)); A_MAX = Math.ceil(A_BEST * 2 / p) * p;
+    dec = A_BEST < 0.1 ? 4 : A_BEST < 1 ? 3 : A_BEST < 10 ? 2 : 1;
+    const s = $('fitA'); s.min = 0; s.max = A_MAX; s.step = A_MAX / 200;
+    if (store.case !== k) { store.case = k; store.fitA = A_MAX * 0.2; store.tries = []; store.runs = []; delete store.found; persist(); gdReset(); }
+    s.value = store.fitA ?? A_MAX * 0.2;
+  };
+
+  /* ===== 1. 주제 확인 ===== */
+  const caseBtns = $('caseBtns');
+  caseBtns.innerHTML = Object.entries(CASES).map(([k, c]) => `<button data-k="${k}"><span class="ic">${c.icon}</span><b>${c.name}: ${c.title}</b><small>${c.career}</small></button>`).join('');
+  caseBtns.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; MF.setCase(b.dataset.k); setCase(b.dataset.k); renderIntro(); });
+  // 2차시 활동지에 남긴 기울기 짐작 (같은 컴퓨터에서만 보인다)
+  const prevPlan = () => { try { const d = JSON.parse(localStorage.getItem('mf-ws-2')) || {}; return { slope: (d.x_plSlope || '').trim(), topic: d.x_plTopic || '' }; } catch (e) { return { slope: '' }; } };
+  const prevHTML = () => {
+    const p = prevPlan();
+    return p.slope ? `<b>📝 2차시에 내가 짐작한 기울기</b><p style="margin-top:6px">${p.slope.replace(/[<>&]/g, '')}</p>`
+      : `<b>📝 2차시에 짐작한 기울기</b><p style="margin-top:6px" class="small">이 컴퓨터에는 2차시 기록이 없어요. 2차시 활동지에 쓴 기울기 짐작을 떠올려 보세요.</p>`;
+  };
+  const dataChart = (cv, a, opts = {}) => {
+    const x = prep(cv), xr = [0, Math.max(...C.x) * 1.08], yr = [0, Math.max(...C.y) * 1.15];
+    const g = frame(x, W, HT, xr, yr, `${C.xl} (${C.xu})`, `${C.yl} (${C.yu})`);
+    if (a != null) {
+      g.clip();
+      if (opts.err) C.x.forEach((xv, i) => { const e = C.y[i] - a * xv; x.strokeStyle = e >= 0 ? COL.pos : COL.neg; x.lineWidth = 2.5; x.beginPath(); x.moveTo(g.px(xv), g.py(C.y[i])); x.lineTo(g.px(xv), g.py(a * xv)); x.stroke(); });
+      x.strokeStyle = opts.color || COL.mine; x.lineWidth = 3; x.beginPath(); x.moveTo(g.px(0), g.py(0)); x.lineTo(g.px(xr[1]), g.py(a * xr[1])); x.stroke();
+      x.restore();
+      const lx = Math.min(xr[1] * 0.7, yr[1] * 0.85 / a); // 직선 위 70% 지점 (그래프 밖이면 위쪽 끝)
+      label(x, `y = ${fa(a)}x`, g.px(lx) - 10, g.py(a * lx) - 4, opts.color || COL.mine, 'right', '800 13px Pretendard, sans-serif');
+    }
+    C.x.forEach((xv, i) => dot(x, g.px(xv), g.py(C.y[i]), 5.5, COL.real));
+    return g;
+  };
+  const renderIntro = () => {
+    caseBtns.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === K));
+    $('introBody').style.display = C ? '' : 'none'; $('introNone').style.display = C ? 'none' : '';
+    if (!C) return;
+    $('caseQ').textContent = C.q;
+    $('prevGuess').innerHTML = prevHTML();
+    dataChart($('introChart'));
+  };
+
+  /* ===== 2. 직선 맞추기 ===== */
+  const fitA = () => +$('fitA').value;
+  const renderFit = () => {
+    if (!C) return;
+    const a = fitA();
+    $('fitAo').textContent = $('fitAv').textContent = fa(a);
+    $('fitL').textContent = fL(loss(a));
+    dataChart($('fitChart'), a, { err: true });
+    // 기록한 (a, 손실) 점
+    const x = prep($('trailChart'), W, 260), tries = store.tries || [];
+    const lmax = Math.max(loss(0), loss(A_MAX)) * 1.05;
+    const g = frame(x, W, 260, [0, A_MAX], [0, lmax], '기울기 a', '손실', { l: 70, r: 16, t: 14, b: 46 });
+    if ($('showCurve').checked) {
+      g.clip(); x.strokeStyle = COL.loss; x.lineWidth = 2.5; x.beginPath();
+      for (let k = 0; k <= 200; k++) { const t = A_MAX * k / 200; k ? x.lineTo(g.px(t), g.py(loss(t))) : x.moveTo(g.px(t), g.py(loss(t))); }
+      x.stroke(); x.restore();
+    }
+    tries.forEach(t => dot(x, g.px(t), g.py(loss(t)), 5.5, COL.loss));
+    dot(x, g.px(a), g.py(loss(a)), 4, COL.mine);
+  };
+  $('fitA').addEventListener('input', () => { store.fitA = fitA(); persist(); renderFit(); });
+  $('fitRec').addEventListener('click', () => { (store.tries ||= []).push(fitA()); persist(); renderFit(); MF.toast(`a = ${fa(fitA())}, 손실 ${fL(loss(fitA()))} 기록!`); });
+  $('fitClear').addEventListener('click', () => { store.tries = []; persist(); renderFit(); });
+  $('showCurve').addEventListener('change', renderFit);
+
+  /* ===== 3. 경사하강법 =====
+   * 보폭은 주제마다 숫자 크기가 달라서 r = 2·η·m2로 정한다. (한 걸음마다 바닥까지 거리가 |1 − r|배)
+   * 작게 0.1: 천천히 / 알맞게 0.6: 빠르게 / 크게 1.85: 바닥을 사이에 두고 왔다 갔다
+   */
+  const ETA_R = { s: 0.1, m: 0.6, b: 1.85 }, ETA_NAME = { s: '작게', m: '알맞게', b: '크게' };
+  let etaKey = store.etaKey || 'm', gd = { a: 0, n: 0, path: [0], last: null, done: false }, timer = null;
+  const eta = () => ETA_R[etaKey] / (2 * m2);
+  function gdReset() { clearInterval(timer); timer = null; gd = { a: 0, n: 0, path: [0], last: null, done: false }; }
+  const closeEnough = a => Math.abs(a - A_BEST) < A_BEST * 0.002;
+  const gdStep = () => {
+    if (gd.done) return false;
+    const a0 = gd.a, s = dL(a0), mv = -eta() * s;
+    gd.a = a0 + mv; gd.n++; gd.path.push(gd.a); gd.last = { a0, s, mv };
+    if (closeEnough(gd.a) || gd.n >= 100) {
+      gd.done = true;
+      const msg = gd.n >= 100 && !closeEnough(gd.a) ? '100걸음 안에 바닥에 닿지 못했어요' : (etaKey === 'b' ? '왔다 갔다 하다가 바닥 도착' : '바닥 도착');
+      store.runs = (store.runs || []).filter(r => r.eta !== ETA_NAME[etaKey]); // 같은 보폭은 마지막 실험만 남긴다
+      store.runs.push({ eta: ETA_NAME[etaKey], n: gd.n, a: fa(gd.a), L: fL(loss(gd.a)), msg });
+      store.found = gd.a; persist();
+    }
+    return true;
+  };
+  const renderGD = () => {
+    if (!C) return;
+    document.querySelectorAll('[data-eta]').forEach(b => b.classList.toggle('primary', b.dataset.eta === etaKey));
+    $('etaInfo').textContent = `η = ${fEta(eta())} (이 데이터는 숫자 크기가 ${m2 > 1000 ? '커서 η가 아주 작은 수예요' : '알맞아서 η도 보통 크기예요'})`;
+    const x = prep($('gdChart')), lmax = Math.max(loss(0), loss(A_MAX)) * 1.05;
+    const g = frame(x, W, HT, [0, A_MAX], [0, lmax], '기울기 a', '손실 L(a)', { l: 70, r: 16, t: 14, b: 46 });
+    g.clip();
+    x.strokeStyle = COL.loss; x.lineWidth = 2.5; x.beginPath();
+    for (let k = 0; k <= 200; k++) { const t = A_MAX * k / 200; k ? x.lineTo(g.px(t), g.py(loss(t))) : x.moveTo(g.px(t), g.py(loss(t))); }
+    x.stroke();
+    x.strokeStyle = COL.trail; x.lineWidth = 1.5; x.beginPath();
+    gd.path.forEach((a, i) => { const X0 = g.px(a), Y0 = g.py(loss(a)); i ? x.lineTo(X0, Y0) : x.moveTo(X0, Y0); }); x.stroke();
+    gd.path.slice(0, -1).forEach(a => dot(x, g.px(a), g.py(loss(a)), 3.5, COL.trail));
+    // 접선
+    const a = gd.a, s = dL(a), da = A_MAX * 0.12;
+    x.strokeStyle = COL.slope; x.lineWidth = 2; x.beginPath(); x.moveTo(g.px(a - da), g.py(loss(a) - s * da)); x.lineTo(g.px(a + da), g.py(loss(a) + s * da)); x.stroke();
+    x.restore();
+    dot(x, g.px(a), g.py(loss(a)), 7, COL.mine);
+    $('gdN').textContent = gd.n; $('gdA').textContent = fa(a); $('gdL').textContent = fL(loss(a));
+    $('gdCalc').innerHTML = gd.last
+      ? `a<sub>${gd.n}</sub> = ${fa(gd.last.a0)} − η × (${fN(gd.last.s)})<br>= ${fa(gd.last.a0)} ${gd.last.mv >= 0 ? '+' : '−'} <b class="c-move">${fa(Math.abs(gd.last.mv))}</b> = <b class="c-mine">${fa(gd.a)}</b>`
+      : `출발: a<sub>0</sub> = 0 · 지금 기울기 L′(0) = ${fN(dL(0))} (음수 → a를 키워요)`;
+    $('gdMsg').innerHTML = gd.done ? `🏁 ${gd.n}걸음 만에 ${etaKey === 'b' ? '왔다 갔다 하다가 ' : ''}바닥 도착! a ≈ <b>${fa(gd.a)}</b>` : (timer ? '굴러가는 중…' : '');
+    dataChart($('gdLine'), a);
+  };
+  document.querySelectorAll('[data-eta]').forEach(b => b.addEventListener('click', () => { etaKey = b.dataset.eta; store.etaKey = etaKey; persist(); gdReset(); renderGD(); }));
+  $('gdStep').addEventListener('click', () => { gdStep(); renderGD(); });
+  $('gdRun').addEventListener('click', () => {
+    if (timer) return; if (gd.done) gdReset();
+    timer = setInterval(() => { if (!gdStep()) { clearInterval(timer); timer = null; } if (gd.done) { clearInterval(timer); timer = null; } renderGD(); }, 220);
   });
-  renderers[document.querySelectorAll('.screen').length - 1] = ws.refresh;
+  $('gdReset').addEventListener('click', () => { gdReset(); renderGD(); });
+
+  /* ===== 4. a의 뜻 ===== */
+  const foundA = () => store.found ?? A_BEST;
+  const meaning = a => C.mean(fa(a));
+  const renderMean = () => {
+    if (!C) return;
+    const a = foundA();
+    dataChart($('meanChart'), a, { color: COL.move });
+    $('meanBox').innerHTML = `<b>🔑 내가 찾은 규칙</b>
+      <p style="margin-top:6px;font-size:18px" class="mono"><b>${C.yl} ≈ ${fa(a)} × ${C.xl}</b></p>
+      <p style="margin-top:6px">손실 ${fL(loss(a))} · ${store.found != null ? '경사하강법으로 찾은 a' : '아직 경사하강법을 끝까지 하지 않아서 손실이 가장 작은 a를 보여 줘요'}</p>
+      <p style="margin-top:8px" class="small">문장으로 바꾸면 → ${meaning(a)}</p>`;
+    $('meanPrev').innerHTML = prevHTML();
+  };
+
+  /* ===== 정리 ===== */
+  const runList = () => (store.runs || []).map(r => `η ${r.eta}: ${r.n}걸음, a = ${r.a} (${r.msg})`);
+  const renderSum = () => {
+    if (!C) { $('sumBox').innerHTML = '1번 화면에서 주제를 골라 주세요.'; return; }
+    const a = foundA();
+    $('sumBox').innerHTML = `<b>${C.icon} ${C.name}: ${C.title}</b>
+      <ol class="simple" style="margin-top:8px;padding-left:20px">
+        <li>손실 = 오차²의 평균. a를 바꾸면 손실이 <b>그릇 모양(이차함수)</b>으로 변해요.</li>
+        <li>경사하강법으로 그릇의 바닥을 찾았어요 → <b>a ≈ ${fa(a)}</b></li>
+        <li>${meaning(a)}</li>
+      </ol>`;
+  };
+
+  /* ===== 활동지 ===== */
+  const resultCanvas = () => { const c = MF.makeCanvas(W, HT); if (C) dataChart(c, foundA(), { color: COL.move }); return c; };
+  const ws = MF.worksheet({
+    lesson: 3, title: '내 데이터 최적화하기',
+    resultTitle: '오늘의 탐구 결과', hideAttach: true,
+    intro: '필수 기록 3개를 쓰고 이미지로 저장해서 카카오톡에 올려요. 화면마다 쓴 답과 경사하강법 실험 기록이 자동으로 함께 담겨요. 탐구 보고서의 세 번째 장이 돼요.',
+    req: [
+      ['오늘 가장 인상 깊었던 수학 원리', '손실이 이차함수가 되는 것, 경사하강법으로 바닥을 찾는 것, 보폭에 따른 변화 등에서 가장 인상 깊었던 것과 그 이유를 써 주세요.'],
+      ['내가 찾은 규칙 설명하기', '아래 세 단계를 차례로 한두 문장씩 써 주세요.', [
+        ['① 어떻게 찾았나요?', '스스로 생각해 봅시다.'],
+        ['② 찾은 a는 무슨 뜻인가요?', '스스로 생각해 봅시다.'],
+        ['③ 이 규칙을 내 진로에서 어떻게 쓸 수 있나요?', '스스로 생각해 봅시다.']
+      ]],
+      ['가장 잘 이해한 부분과 어려웠던 부분', '오늘 수업에서 잘 이해한 부분과 어려웠던 부분을 함께 써 주세요.']
+    ],
+    check: () => (!C ? '1번 화면에서 탐구 주제를 골라 주세요.' : null),
+    compact: {
+      summary: () => [
+        ['수업', 'AI교과융합 캠프 「손실함수와 경사하강법을 활용한 데이터 최적화」 3차시 · 내 데이터 최적화하기'],
+        ['탐구 주제', C ? `${C.icon} ${C.name}: ${C.title}` : ''],
+        ['활동 내용', C ? `${C.title} 데이터 ${C.x.length}개를 y = ax로 근사함. 기울기 a를 바꾸며 손실(오차²의 평균)을 비교하고, 경사하강법 a(n+1) = a(n) − η × L′(a(n))으로 손실이 가장 작은 a ≈ ${fa(foundA())}를 찾음. 보폭에 따른 수렴 과정을 비교하고 a의 뜻을 해석함.` : ''],
+        ['찾은 규칙', C ? `${C.yl} ≈ ${fa(foundA())} × ${C.xl} (손실 ${fL(loss(foundA()))})` : ''],
+        ['경사하강법 실험', runList().join(' / ')]
+      ]
+    },
+    getResult: () => ({ canvas: resultCanvas(), lines: [
+      ['탐구 주제', C ? `${C.name}: ${C.title}` : ''],
+      ['찾은 규칙', C ? `${C.yl} ≈ ${fa(foundA())} × ${C.xl}` : ''],
+      ['경사하강법 실험 (자동 기록)', runList().join(' / ') || '기록 없음']
+    ] })
+  });
+
   /* ===== 시작 ===== */
-  const wiz = MF.wizard({ onShow: i => renderers[i]?.() });
+  if (K) setCase(K);
+  const renderers = [renderIntro, renderFit, renderGD, renderMean, () => { renderSum(); ws.refresh(); }];
+  const guard = fn => () => { if (!C && fn !== renderers[0]) { MF.toast('1번 화면에서 주제를 먼저 골라 주세요.'); } fn(); };
+  MF.wizard({ onShow: i => guard(renderers[i])?.() });
 })();
 </script>
 </body>
