@@ -626,7 +626,8 @@
     });
     // 필수 기록의 세 번째 값이 [[단계 이름, 예시 문장], ...]이면 단계별 칸으로 나눠 쓴다.
     // 단계 답을 모아 'r' + k에 '단계 이름: 답' 줄로 저장해서, 저장·제출 쪽은 그대로 쓴다.
-    REQ.forEach(([, , steps], k) => {
+    // 네 번째 값(example)은 단계마다 하나씩인 예시 답안. [📖 예시 답안 보기]를 눌러야 보인다.
+    REQ.forEach(([, , steps, example], k) => {
       const slot = block.querySelector(`[data-slot="${k}"]`);
       if (!steps) { slot.append(box('r' + k, 4, '', 'ws-req-in')); return; }
       const join = () => {
@@ -642,6 +643,18 @@
         row.append(ta);
         slot.append(row);
       });
+      if (example) {
+        const ex = document.createElement('div');
+        ex.className = 'ws-example';
+        ex.innerHTML = `<button type="button" class="btn sm">📖 예시 답안 보기</button>
+          <div class="ws-example-box" hidden>${steps.map(([n], j) => `<div class="ws-example-row"><b>${n}</b><p>${example[j]}</p></div>`).join('')}</div>`;
+        const btn = ex.querySelector('button'), exBox = ex.querySelector('.ws-example-box');
+        btn.addEventListener('click', () => {
+          exBox.hidden = !exBox.hidden;
+          btn.textContent = exBox.hidden ? '📖 예시 답안 보기' : '📖 예시 답안 접기';
+        });
+        slot.append(ex);
+      }
       join();
     });
 

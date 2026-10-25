@@ -376,3 +376,8 @@ body.mf-mode-note .mf-hover { outline: 3px solid #e1306c !important; outline-off
 .ws-table tbody th small { display: block; font-weight: 500; color: var(--muted); font-size: 12px; }
 .ws-table td input { width: 100%; font-size: 14px; padding: 8px 10px; background: #fffdf7; border: 1px dashed #e8d9b0; }
 .ws-table td input:focus { border-style: solid; border-color: var(--accent); outline: none; background: #fff; }
+.ws-example { margin-top: 12px; }
+.ws-example-box { margin-top: 8px; padding: 12px 14px; border-radius: 10px; background: #f6f3ff; border: 1px solid #ddd3fb; }
+.ws-example-row + .ws-example-row { margin-top: 10px; }
+.ws-example-row b { font-size: 14px; }
+.ws-example-row p { margin: 2px 0 0; font-size: 15px; line-height: 1.6; }
