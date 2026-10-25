@@ -44,7 +44,6 @@
         <div><canvas id="introChart" class="chart"></canvas></div>
         <div>
           <div class="box key"><b>🔎 탐구 질문</b><p id="caseQ" style="margin-top:6px;font-size:17px;font-weight:700"></p></div>
-          <div class="box tip" style="margin-top:12px" id="prevGuess"></div>
           <div class="box" style="margin-top:12px">
             <b>오늘 할 일</b>
             <ol class="simple" style="margin-top:6px;padding-left:20px">
@@ -141,12 +140,9 @@
       </div>
       <div class="cols wide-left">
         <div><canvas id="meanChart" class="chart"></canvas></div>
-        <div>
-          <div class="box key" id="meanBox"></div>
-          <div class="box tip" style="margin-top:12px" id="meanPrev"></div>
-        </div>
+        <div><div class="box key" id="meanBox"></div></div>
       </div>
-      <div class="screen-q" data-fields="a의 뜻::찾은 a를 내 주제의 말로 설명해요. :: ::'x가 1 늘면 y가 약 a만큼 늘어요'를 내 주제의 낱말과 단위로 바꿔 보세요.|2차시 짐작과 비교::2차시에 짐작한 기울기와 얼마나 비슷했나요? :: ::오른쪽 노란 상자에서 2차시 기록을 확인하세요.">🔍 내 주제의 말로 해석하기</div>
+      <div class="screen-q" data-fields="a의 뜻::찾은 a를 내 주제의 말로 설명해요. :: ::'x가 1 늘면 y가 약 a만큼 늘어요'를 내 주제의 낱말과 단위로 바꿔 보세요.">🔍 내 주제의 말로 해석하기</div>
     </div>
   </section>
 
@@ -160,7 +156,7 @@
       </div>
       <div class="box key" style="margin-bottom:16px" id="sumBox"></div>
       <ol class="think">
-        <li data-hint="데이터의 x 범위를 보고, 그보다 훨씬 큰 x를 상상해 보세요.|비행기는 지구 반대편까지, 식물은 하루 24시간 빛, 관세는 아주 높게 오르면?">⭐ 다음 시간 예고: 데이터보다 훨씬 큰 x에서도 오늘 찾은 직선이 잘 맞을까요? 그렇게 생각한 이유는?</li>
+        <li data-hint="데이터의 x 범위를 보고, 그보다 훨씬 큰 x를 상상해 보세요.|비행기는 지구 반대편까지, 식물은 한여름 햇빛을 하루 종일, 관세는 아주 높게 오르면?">⭐ 다음 시간 예고: 데이터보다 훨씬 큰 x에서도 오늘 찾은 직선이 잘 맞을까요? 그렇게 생각한 이유는?</li>
       </ol>
     </div>
   </section>
@@ -172,7 +168,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025f"></script>
+<script src="assets/common.js?v=20261025h"></script>
 <script>
 (() => {
   const CASES = MF.CASES;
@@ -234,19 +230,6 @@
   const caseBtns = $('caseBtns');
   caseBtns.innerHTML = Object.entries(CASES).map(([k, c]) => `<button data-k="${k}"><span class="ic">${c.icon}</span><b>${c.name}: ${c.title}</b><small>${c.career}</small></button>`).join('');
   caseBtns.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; MF.setCase(b.dataset.k); setCase(b.dataset.k); renderIntro(); });
-  // 2차시 활동지에 남긴 기울기 짐작 (같은 컴퓨터에서만 보인다)
-  const prevPlan = () => { try { const d = JSON.parse(localStorage.getItem('mf-ws-2')) || {}; return { slope: (d.x_plSlope || '').trim(), topic: d.x_plTopic || '' }; } catch (e) { return { slope: '' }; } };
-  // 기록이 없으면(다른 컴퓨터 등) 1번 화면에서 직접 적게 하고 store.guess에 저장한다
-  const escH = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
-  const guessText = () => prevPlan().slope || (store.guess || '').trim();
-  const prevHTML = (editable = false) => {
-    const p = prevPlan(), head = '<b>📝 2차시 탐구 계획서 ③ 기울기 짐작하기</b>';
-    if (p.slope) return `${head}<p style="margin-top:6px">${escH(p.slope)}</p>`;
-    if (editable) return `${head}<p style="margin-top:6px" class="small">이 컴퓨터에는 2차시 기록이 없어요. 2차시 활동지 사진을 보고 짐작한 기울기를 적어 주세요.</p>
-      <input type="text" id="guessIn" maxlength="120" style="margin-top:6px;width:100%" placeholder="예: x가 1 늘면 y는 약 ○ 늘 것 같다" value="${escH(store.guess || '')}">`;
-    return `${head}<p style="margin-top:6px">${store.guess ? escH(store.guess) : '<span class="small muted">기록이 없어요. 1번 화면에서 적을 수 있어요.</span>'}</p>`;
-  };
-  document.addEventListener('input', e => { if (e.target.id === 'guessIn') { store.guess = e.target.value; persist(); } });
   const dataChart = (cv, a, opts = {}) => {
     const x = prep(cv), xr = [0, Math.max(...C.x) * 1.08], yr = [0, Math.max(...C.y) * 1.15];
     const g = frame(x, W, HT, xr, yr, `${C.xl} (${C.xu})`, `${C.yl} (${C.yu})`);
@@ -266,7 +249,6 @@
     $('introBody').style.display = C ? '' : 'none'; $('introNone').style.display = C ? 'none' : '';
     if (!C) return;
     $('caseQ').textContent = C.q;
-    $('prevGuess').innerHTML = prevHTML(true);
     dataChart($('introChart'));
   };
 
@@ -369,7 +351,6 @@
       <p style="margin-top:6px;font-size:18px" class="mono"><b>${C.yl} ≈ ${fa(a)} × ${C.xl}</b></p>
       <p style="margin-top:6px">손실 ${fL(loss(a))} · ${store.found != null ? '경사하강법으로 찾은 a' : '아직 경사하강법을 끝까지 하지 않아서 손실이 가장 작은 a를 보여 줘요'}</p>
       <p style="margin-top:8px" class="small">문장으로 바꾸면 → ${meaning(a)}</p>`;
-    $('meanPrev').innerHTML = prevHTML();
   };
 
   /* ===== 정리 ===== */
@@ -407,7 +388,6 @@
         ['탐구 주제', C ? `${C.icon} ${C.name}: ${C.title}` : ''],
         ['활동 내용', C ? `${C.title} 데이터 ${C.x.length}개를 y = ax로 근사함. 기울기 a를 바꾸며 손실(오차²의 평균)을 비교하고, 경사하강법 a(n+1) = a(n) − η × L′(a(n))으로 손실이 가장 작은 a ≈ ${fa(foundA())}를 찾음. 보폭에 따른 수렴 과정을 비교하고 a의 뜻을 해석함.` : ''],
         ['찾은 규칙', C ? `${C.yl} ≈ ${fa(foundA())} × ${C.xl} (손실 ${fL(loss(foundA()))})` : ''],
-        ['2차시 기울기 짐작', guessText()],
         ['경사하강법 실험', runList().join(' / ')]
       ]
     },

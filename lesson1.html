@@ -427,7 +427,7 @@
         <div class="cols wide-left">
           <div>
             <canvas id="caseChart" class="chart"></canvas>
-            <p class="small muted" style="margin:6px 0 0">※ 실제 경향을 바탕으로 수업용으로 단순화한 예시 데이터예요.</p>
+            <p class="small muted" style="margin:6px 0 0">※ 수업을 위해 만든 가상의 예시 데이터예요. (경향은 실제 현상을 따랐어요)</p>
           </div>
           <div><div style="max-height:360px;overflow-y:auto"><table class="err-table" id="caseTable"></table></div></div>
         </div>
@@ -450,7 +450,7 @@
           <ul class="simple" style="margin-top:8px">
             <li>③ 표에서 x가 많이 차이 나는 두 점(처음과 끝)을 고르면 계산하기 쉬워요.</li>
             <li>③ 1차시 선수 학습의 <b>기울기 = y의 변화량 ÷ x의 변화량</b>을 떠올려 보세요.</li>
-            <li>⭐ x가 아주 커지는 상황을 상상해 보세요. 비행기는 지구 반대편까지, 식물은 하루 24시간 빛, 관세는 100%까지 올라가면?</li>
+            <li>⭐ x가 아주 커지는 상황을 상상해 보세요. 비행기는 지구 반대편까지, 식물은 한여름 햇빛을 하루 종일, 관세는 100%까지 올라가면?</li>
           </ul>
         </details>
       </div>
@@ -567,7 +567,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025f"></script>
+<script src="assets/common.js?v=20261025h"></script>
 <script>
 (() => {
   /* ===== 1차시와 2차시는 이 파일 하나로 만든다 =====
@@ -1761,20 +1761,33 @@
       x.fillStyle = col; x.fillRect(24, HT - 36, (W - 48) * Math.max(0, Math.min(1, frac)), 20);
     };
     if (caseKey === 'air') {
+      // 출발지에서 오른쪽으로 갈수록 먼 도시. 비행기가 지나간 도시는 진하게, 아직 못 간 도시는 흐리게
       x.fillStyle = '#eff6ff'; x.fillRect(0, 0, W, HT - 80);
-      const x0 = 50, x1 = W - 50, px = x0 + (x1 - x0) * t, gy = HT - 120;
-      x.strokeStyle = '#93c5fd'; x.setLineDash([6, 6]); x.lineWidth = 2; x.beginPath(); x.moveTo(x0, gy); x.quadraticCurveTo((x0 + px) / 2, gy - 120 * t - 20, px, gy); x.stroke(); x.setLineDash([]);
-      x.font = '28px sans-serif'; x.textAlign = 'center'; x.fillText('🛫', x0, gy + 4); x.fillText('🛬', px, gy + 4);
-      x.font = '700 13px Pretendard, sans-serif'; x.fillStyle = '#1e3a8a'; x.fillText('출발', x0, gy + 30);
-      let near = 0; c.x.forEach((v, i) => { if (Math.abs(v - xv) < Math.abs(c.x[near] - xv)) near = i; });
-      x.fillText(Math.abs(c.x[near] - xv) < 120 ? c.labels[near].split('→')[1] : '도착', px, gy + 30);
-      bar('⛽ 사용한 연료', xv / Math.max(...c.x), '#f59e0b');
+      const x0 = 46, x1 = W - 40, gy = 150, xm = Math.max(...c.x);
+      const pxOf = v => x0 + (x1 - x0) * v / xm, ppx = pxOf(xv);
+      x.strokeStyle = '#cbd5e1'; x.lineWidth = 4; x.beginPath(); x.moveTo(x0, gy); x.lineTo(x1, gy); x.stroke();
+      x.strokeStyle = '#2563eb'; x.lineWidth = 4; x.beginPath(); x.moveTo(x0, gy); x.lineTo(ppx, gy); x.stroke();
+      x.font = '700 12px Pretendard, sans-serif'; x.textAlign = 'center';
+      c.x.forEach((v, i) => {
+        const X0 = pxOf(v), passed = v <= xv + 1, up = i % 2 === 0, lvl = Math.floor(i / 2) % 2;
+        dot(x, X0, gy, 6, passed ? '#1e3a8a' : '#cbd5e1');
+        const ty = up ? gy - 22 - lvl * 18 : gy + 24 + lvl * 18;
+        x.strokeStyle = passed ? '#93c5fd' : '#e2e8f0'; x.lineWidth = 1; x.beginPath(); x.moveTo(X0, gy + (up ? -7 : 7)); x.lineTo(X0, ty + (up ? 6 : -10)); x.stroke();
+        x.fillStyle = passed ? '#1e3a8a' : '#94a3b8'; x.fillText(c.labels[i].split('→')[1], X0, ty);
+      });
+      x.font = '26px sans-serif'; x.fillText('✈️', ppx, gy - 2);
+      x.font = '700 13px Pretendard, sans-serif'; x.fillStyle = '#1e3a8a'; x.textAlign = 'left'; x.fillText('🛫 출발 (김포·인천)', 10, 24);
+      x.fillStyle = '#64748b'; x.font = '12px Pretendard, sans-serif'; x.fillText('도시는 출발지에서 먼 순서로 늘어놓았어요', 10, 44);
+      bar('⛽ 사용한 연료', xv / xm, '#f59e0b');
     } else if (caseKey === 'plant') {
-      const cx = 130, cy = 130, r = 80, hrs = xv;
-      x.fillStyle = '#1e293b'; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
-      x.fillStyle = '#fde047'; x.beginPath(); x.moveTo(cx, cy); x.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * hrs / 24); x.closePath(); x.fill();
-      x.fillStyle = '#4b4860'; x.font = '700 13px Pretendard, sans-serif'; x.textAlign = 'center'; x.fillText('하루 24시간 중 빛 ☀️', cx, cy + r + 18);
-      const base = HT - 70, potX = 380, grow = caseSlope(c) * hrs * 26;
+      // 해: 하루 빛의 양이 많을수록 크고 빛살이 많아진다
+      const t = xv / Math.max(...c.x), cx = 130, cy = 120, r = 22 + 22 * t, rays = 6 + Math.round(10 * t);
+      x.strokeStyle = '#facc15'; x.lineWidth = 3;
+      for (let k = 0; k < rays; k++) { const an = Math.PI * 2 * k / rays; x.beginPath(); x.moveTo(cx + Math.cos(an) * (r + 6), cy + Math.sin(an) * (r + 6)); x.lineTo(cx + Math.cos(an) * (r + 12 + 26 * t), cy + Math.sin(an) * (r + 12 + 26 * t)); x.stroke(); }
+      x.fillStyle = '#fde047'; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#4b4860'; x.font = '700 13px Pretendard, sans-serif'; x.textAlign = 'center'; x.fillText('하루 동안 받은 빛의 양', cx, 236);
+      x.fillStyle = '#eef0f6'; x.fillRect(cx - 70, 248, 140, 10); x.fillStyle = '#facc15'; x.fillRect(cx - 70, 248, 140 * t, 10);
+      const base = HT - 70, potX = 380, grow = caseSlope(c) * xv * 26;
       x.fillStyle = '#b45309'; x.beginPath(); x.moveTo(potX - 40, base - 40); x.lineTo(potX + 40, base - 40); x.lineTo(potX + 30, base); x.lineTo(potX - 30, base); x.closePath(); x.fill();
       x.strokeStyle = '#94a3b8'; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(potX - 70, base - 60); x.lineTo(potX + 70, base - 60); x.stroke(); x.setLineDash([]);
       x.strokeStyle = '#16a34a'; x.lineWidth = 6; x.beginPath(); x.moveTo(potX, base - 40); x.lineTo(potX, base - 60 - grow); x.stroke();
