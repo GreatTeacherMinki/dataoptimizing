@@ -3,10 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>4차시 데이터 최적화 실습 2 및 탐구 보고서</title>
+<title>4차시 직선의 한계와 탐구 보고서</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="assets/common.css?v=20261025e">
 <link rel="stylesheet" href="assets/theme.css?v=20261023">
+<link rel="stylesheet" href="assets/lesson.css?v=20261025g">
+<style>
+  .cause-cards { display: grid; gap: 8px; }
+  .cause-cards button { text-align: left; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 14px; font: inherit; font-size: 15px; cursor: pointer; color: var(--ink); }
+  .cause-cards button.right { border-color: #16a34a; background: #f0fdf4; }
+  .cause-cards button.wrong { border-color: #fda4af; background: #fff1f2; }
+  .cause-fb { margin-top: 10px; }
+  .err-table td.big { color: var(--c-pos); font-weight: 800; }
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -25,68 +34,97 @@
 <main class="wrap">
   <div class="lesson-head">
     <span class="eyebrow">4차시</span>
-    <h1>데이터 최적화 실습 2 및 탐구 보고서</h1>
+    <h1>직선의 한계와 탐구 보고서</h1>
     <span class="lesson-date">11/13(금)</span>
   </div>
   <ol class="stepper" id="stepper"></ol>
 
-  <!-- 1. 도입 -->
-  <section class="screen" data-title="도입">
+  <!-- 1. 직선으로 예측하기 -->
+  <section class="screen" data-title="직선으로 예측하기">
     <div class="step">
       <div class="step-head">
         <div class="step-num">1</div>
-        <div><h2>도입</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
+        <div><h2>찾은 직선으로 예측하기</h2><p>3차시에 찾은 직선 <b>y = ax</b>로 데이터에 <b>없는</b> 상황을 예측해 봐요. 슬라이더로 x를 데이터보다 훨씬 크게 늘려 보세요.</p></div>
+        <span class="step-time">10분</span>
       </div>
-      <div class="placeholder-grid">
-        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
-        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
+      <div class="case-btns" id="caseBtns"></div>
+      <div class="cols wide-left" style="margin-top:14px" id="predBody">
+        <div>
+          <canvas id="predChart" class="chart"></canvas>
+          <div class="slider-row" style="margin-top:8px"><label id="predLbl" style="min-width:120px"></label><input type="range" id="predX" min="0" max="100" step="1" value="100"><output id="predXo"></output></div>
+        </div>
+        <div>
+          <div class="box key" id="predRule"></div>
+          <div class="box tip" style="margin-top:12px" id="predQ"></div>
+          <p class="small muted" style="margin-top:8px">파란 점선 = 데이터가 <b>없는</b> 구간까지 늘린 직선이에요.</p>
+        </div>
       </div>
-      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
-    </div>
-  </section>
-  <!-- 2. 활동 1 -->
-  <section class="screen" data-title="활동 1">
-    <div class="step">
-      <div class="step-head">
-        <div class="step-num">2</div>
-        <div><h2>활동 1</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
-      </div>
-      <div class="placeholder-grid">
-        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
-        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
-      </div>
-      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
-    </div>
-  </section>
-  <!-- 3. 탐구 보고서 -->
-  <section class="screen" data-title="탐구 보고서">
-    <div class="step">
-      <div class="step-head">
-        <div class="step-num">3</div>
-        <div><h2>탐구 보고서</h2><p>이 화면의 안내 문구가 들어갈 자리예요.</p></div>
-      </div>
-      <div class="placeholder-grid">
-        <div class="placeholder"><b>📝 내용 준비 중</b>실습 도구(그래프, 슬라이더 등)가 들어갈 자리</div>
-        <div class="placeholder"><b>📝 내용 준비 중</b>설명이나 계산 과정이 들어갈 자리</div>
-      </div>
-      <div class="screen-q" data-hint="힌트 1이 들어갈 자리|힌트 2가 들어갈 자리">(질문 준비 중)</div>
+      <div id="predNone" class="placeholder" style="margin-top:14px"><b>👆 위에서 내 주제를 골라 주세요</b>2·3차시와 같은 주제를 고르면 돼요.</div>
+      <div class="screen-q" data-fields="내 예측::직선으로 예측한 값은 얼마인가요? :: ::슬라이더를 오른쪽 끝까지 옮기면 예측값이 나와요.|믿을 수 있을까?::이 예측을 믿을 수 있을까요? 그렇게 생각한 이유는? :: ::데이터가 있는 구간과 없는 구간을 비교해 보세요.">🎯 미션: 데이터 밖을 예측하기</div>
     </div>
   </section>
 
-  <!-- 4. 정리·제출 -->
-  <section class="screen" data-title="정리">
+  <!-- 2. 숨겨진 데이터 -->
+  <section class="screen" data-title="숨겨진 데이터">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div><h2>숨겨진 데이터 공개!</h2><p>사실 데이터가 더 있었어요. 버튼을 눌러 숨겨진 데이터를 보고, 직선의 예측과 비교해요.</p></div>
+        <span class="step-time">12분</span>
+      </div>
+      <div class="btn-row" style="margin-bottom:10px"><button class="btn primary" id="revealBtn">🔓 숨겨진 데이터 공개</button></div>
+      <div class="cols wide-left">
+        <div>
+          <canvas id="revChart" class="chart"></canvas>
+          <div class="legend">
+            <span style="color:var(--c-real)">● 3차시 데이터</span>
+            <span style="color:var(--c-pos)">◆ 숨겨진 데이터</span>
+            <span style="color:var(--c-mine)"><i></i>직선 y = ax</span>
+          </div>
+        </div>
+        <div>
+          <div class="stat-row" id="revStats"></div>
+          <div style="max-height:300px;overflow-y:auto;margin-top:10px"><table class="err-table" id="revTable"></table></div>
+        </div>
+      </div>
+      <div class="screen-q" data-fields="발견한 것::숨겨진 데이터는 직선과 어떻게 달랐나요? :: ::빨간 마름모가 직선보다 위에 있나요, 아래에 있나요?|오차의 변화::x가 커질수록 오차는 어떻게 변하나요? :: ::오른쪽 표의 '오차' 열을 위에서 아래로 읽어 보세요.">🔍 직선의 한계 찾기</div>
+    </div>
+  </section>
+
+  <!-- 3. 한계의 원인 -->
+  <section class="screen" data-title="한계의 원인">
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div><h2>왜 직선이 맞지 않을까?</h2><p>점마다 <b>y ÷ x</b>(x 1당 y)를 재 보면 데이터가 어떻게 휘는지 보여요. 그다음 그 원인을 찾아봐요.</p></div>
+        <span class="step-time">13분</span>
+      </div>
+      <div class="cols wide-left">
+        <div>
+          <div class="matrix-label">점마다 y ÷ x <span class="muted" style="font-weight:500">(x 1당 y · 빨강은 숨겨진 데이터)</span></div>
+          <canvas id="slopeChart" class="chart"></canvas>
+          <p class="small muted" style="margin:6px 0 0">y = ax라면 모든 점에서 y ÷ x = a라서 막대 높이가 모두 같아야 해요. 주황 점선이 3차시에 찾은 a예요. (<span id="aNote"></span>)</p>
+        </div>
+        <div>
+          <div class="box"><b>🤔 원인은 무엇일까요?</b><p class="small" style="margin:4px 0 8px">가장 알맞은 것을 골라 보세요.</p>
+            <div class="cause-cards" id="causeCards"></div>
+            <div class="cause-fb" id="causeFb"></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-q" data-fields="y ÷ x의 변화::x가 커질수록 y ÷ x는 어떻게 변하나요? :: ::막대가 점점 높아지나요, 낮아지나요? 주황 점선(a)과 비교해 보세요.|한계의 원인::직선이 맞지 않는 이유를 내 말로 설명해요. :: ::위에서 고른 원인을 내 주제의 낱말로 바꿔 보세요.|⭐ 더 좋은 모델::직선 대신 어떤 모양의 그래프가 더 잘 맞을까요? :: ::점점 가팔라지는 곡선? 점점 평평해지는 곡선? 1차시의 '나이 → 키' 예시를 떠올려 보세요.">🔍 한계의 원인 정리하기</div>
+    </div>
+  </section>
+
+  <!-- 4. 탐구 보고서 -->
+  <section class="screen" data-title="탐구 보고서">
     <div class="step">
       <div class="step-head">
         <div class="step-num">✓</div>
-        <div><h2>오늘 배운 것</h2><p>오늘 활동을 잘 이해했는지 질문에 답하고, 활동지를 제출해요.</p></div>
+        <div><h2>탐구 보고서 쓰기</h2><p>2~4차시 탐구를 하나의 보고서로 정리해요. 아래 자동 정리를 참고해서 다섯 칸을 채우고 이미지로 저장해요.</p></div>
+        <span class="step-time">15분</span>
       </div>
-      <div class="box key" style="margin-bottom:16px">
-        <p>오늘 배운 핵심 내용이 들어갈 자리예요.</p>
-      </div>
-      <ol class="think">
-        <li data-hint="힌트 1|힌트 2">(정리 질문 1 준비 중)</li>
-        <li data-hint="힌트 1|힌트 2">(정리 질문 2 준비 중)</li>
-      </ol>
+      <div class="box key" id="autoSum" style="margin-bottom:16px"></div>
     </div>
   </section>
 
@@ -97,20 +135,205 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025h"></script>
+<script src="assets/common.js?v=20261025j"></script>
 <script>
 (() => {
-  const renderers = {};
-  /* ===== 활동지 ===== */
+  const CASES = MF.CASES;
+  const COL = { real: '#1e3a8a', pos: '#e11d48', neg: '#0891b2', mine: '#2563eb', loss: '#0e9f9a', slope: '#7c3aed', move: '#ea580c' };
+  const store = (() => { try { return JSON.parse(localStorage.getItem('do-l4')) || {}; } catch (e) { return {}; } })();
+  const persist = () => { try { localStorage.setItem('do-l4', JSON.stringify(store)); } catch (e) {} };
+  const $ = id => document.getElementById(id);
+
+  /* ===== 그래프 도우미 (3차시와 같은 모양) ===== */
+  const W = 520, HT = 340, P = { l: 62, r: 16, t: 14, b: 46 };
+  const prep = (cv, w = W, h = HT, dpr = 2) => { cv.width = w * dpr; cv.height = h * dpr; const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); return x; };
+  const niceTicks = (lo, hi, n = 5) => {
+    const raw = (hi - lo) / n, p = 10 ** Math.floor(Math.log10(raw)), st = [1, 2, 2.5, 5, 10].map(k => k * p).find(k => k >= raw);
+    const out = []; for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) out.push(Math.round(v * 1e6) / 1e6); return out;
+  };
+  const tickLbl = v => Math.abs(v) >= 1000 ? v.toLocaleString() : String(v);
+  const frame = (x, w, h, xr, yr, xl, yl, pad = P) => {
+    const px = v => pad.l + (v - xr[0]) / (xr[1] - xr[0]) * (w - pad.l - pad.r);
+    const py = v => h - pad.b - (v - yr[0]) / (yr[1] - yr[0]) * (h - pad.t - pad.b);
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+    x.strokeStyle = '#eef0f6'; x.lineWidth = 1; x.font = '12px Pretendard, sans-serif'; x.fillStyle = '#6b6880';
+    niceTicks(xr[0], xr[1], 6).filter(v => v >= xr[0] && v <= xr[1]).forEach(v => { x.beginPath(); x.moveTo(px(v), py(yr[0])); x.lineTo(px(v), py(yr[1])); x.stroke(); x.textAlign = 'center'; x.fillText(tickLbl(v), px(v), h - pad.b + 16); });
+    niceTicks(yr[0], yr[1], 5).filter(v => v >= yr[0] && v <= yr[1]).forEach(v => { x.beginPath(); x.moveTo(px(xr[0]), py(v)); x.lineTo(px(xr[1]), py(v)); x.stroke(); x.textAlign = 'right'; x.fillText(tickLbl(v), pad.l - 6, py(v) + 4); });
+    x.strokeStyle = '#9b97ad'; x.beginPath(); x.moveTo(px(xr[0]), py(yr[1])); x.lineTo(px(xr[0]), py(yr[0])); x.lineTo(px(xr[1]), py(yr[0])); x.stroke();
+    x.fillStyle = '#4b4860'; x.font = '600 13px Pretendard, sans-serif'; x.textAlign = 'center';
+    if (xl) x.fillText(xl, (pad.l + w - pad.r) / 2, h - 8);
+    if (yl) { x.textAlign = 'left'; x.font = '600 12.5px Pretendard, sans-serif'; x.fillText(yl, pad.l + 6, pad.t + 12); }
+    return { px, py, clip: () => { x.save(); x.beginPath(); x.rect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b); x.clip(); } };
+  };
+  const dot = (x, X0, Y0, r, c) => { x.fillStyle = c; x.beginPath(); x.arc(X0, Y0, r, 0, Math.PI * 2); x.fill(); };
+  const diamond = (x, X0, Y0, r, c) => { x.fillStyle = c; x.beginPath(); x.moveTo(X0, Y0 - r); x.lineTo(X0 + r, Y0); x.lineTo(X0, Y0 + r); x.lineTo(X0 - r, Y0); x.closePath(); x.fill(); };
+  const label = (x, text, tx, ty, color, align = 'left', font = '700 12.5px Pretendard, sans-serif') => {
+    x.font = font; x.textAlign = align; x.lineWidth = 3.5; x.strokeStyle = '#fff'; x.strokeText(text, tx, ty); x.fillStyle = color; x.fillText(text, tx, ty);
+  };
+
+  /* ===== 주제와 3차시에 찾은 a =====
+   * 3차시 기록(do-l3)이 같은 주제면 그 a를, 아니면 손실이 가장 작은 a를 쓴다.
+   */
+  let K = CASES[MF.getCase()] ? MF.getCase() : (CASES[store.case] ? store.case : '');
+  let C, A, dec;
+  const mean = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+  const fa = v => (Math.round(v * 10 ** dec) / 10 ** dec).toFixed(dec);
+  const fy = v => Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : (Math.round(v * 10) / 10).toFixed(1);
+  const l3 = () => { try { return JSON.parse(localStorage.getItem('do-l3')) || {}; } catch (e) { return {}; } };
+  const setCase = k => {
+    K = k; C = CASES[k];
+    const best = mean(C.x.map((x, i) => x * C.y[i])) / mean(C.x.map(x => x * x));
+    const prev = l3(); A = prev.case === k && prev.found != null ? prev.found : best;
+    dec = A < 0.1 ? 4 : A < 1 ? 3 : A < 10 ? 2 : 1;
+    if (store.case !== k) { store.case = k; store.revealed = false; store.cause = null; persist(); }
+  };
+  const allX = () => [...C.x, ...C.more.x], allY = () => [...C.y, ...C.more.y];
+
+  /* ===== 1. 직선으로 예측하기 ===== */
+  const caseBtns = $('caseBtns');
+  caseBtns.innerHTML = Object.entries(CASES).map(([k, c]) => `<button data-k="${k}"><span class="ic">${c.icon}</span><b>${c.name}: ${c.title}</b><small>${c.career}</small></button>`).join('');
+  caseBtns.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; MF.setCase(b.dataset.k); setCase(b.dataset.k); renderPred(); });
+  const predXv = () => { const lo = Math.max(...C.x), hi = C.predict.x; return lo + (hi - lo) * $('predX').value / 100; };
+  // 데이터 범위 + 늘린 직선 (숨긴 데이터는 reveal일 때만)
+  const bigChart = (cv, opts = {}) => {
+    const x = prep(cv), xmax = C.predict.x * 1.06;
+    const ymax = Math.max(A * C.predict.x, ...(opts.reveal ? allY() : C.y)) * 1.1;
+    const g = frame(x, W, HT, [0, xmax], [0, ymax], `${C.xl} (${C.xu})`, `${C.yl} (${C.yu})`);
+    const dmax = Math.max(...C.x);
+    g.clip();
+    x.fillStyle = 'rgba(37,99,235,0.06)'; x.fillRect(g.px(0), g.py(ymax), g.px(dmax) - g.px(0), g.py(0) - g.py(ymax));
+    x.strokeStyle = COL.mine; x.lineWidth = 3; x.beginPath(); x.moveTo(g.px(0), g.py(0)); x.lineTo(g.px(dmax), g.py(A * dmax)); x.stroke();
+    x.setLineDash([7, 6]); x.beginPath(); x.moveTo(g.px(dmax), g.py(A * dmax)); x.lineTo(g.px(xmax), g.py(A * xmax)); x.stroke(); x.setLineDash([]);
+    if (opts.reveal) C.more.x.forEach((xv, i) => { x.strokeStyle = 'rgba(225,29,72,0.5)'; x.lineWidth = 2; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(g.px(xv), g.py(C.more.y[i])); x.lineTo(g.px(xv), g.py(A * xv)); x.stroke(); x.setLineDash([]); });
+    x.restore();
+    label(x, '데이터가 있는 구간', g.px(dmax / 2), P.t + 30, '#64748b', 'center', '600 12px Pretendard, sans-serif');
+    C.x.forEach((xv, i) => dot(x, g.px(xv), g.py(C.y[i]), 4.5, COL.real));
+    if (opts.reveal) C.more.x.forEach((xv, i) => diamond(x, g.px(xv), g.py(C.more.y[i]), 7, COL.pos));
+    if (opts.px != null) { dot(x, g.px(opts.px), g.py(A * opts.px), 7, COL.move); label(x, `예측 ${fy(A * opts.px)}`, g.px(opts.px) - 10, g.py(A * opts.px) - 12, COL.move, 'right'); }
+    return g;
+  };
+  const renderPred = () => {
+    caseBtns.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === K));
+    $('predBody').style.display = C ? '' : 'none'; $('predNone').style.display = C ? 'none' : '';
+    if (!C) return;
+    const xv = predXv();
+    $('predLbl').textContent = C.xl; $('predXo').textContent = `${fy(xv)} ${C.xu}`;
+    bigChart($('predChart'), { px: xv });
+    $('predRule').innerHTML = `<b>🔑 3차시에 찾은 직선</b><p class="mono" style="margin-top:6px;font-size:17px"><b>${C.yl} ≈ ${fa(A)} × ${C.xl}</b></p>
+      <p style="margin-top:8px">${C.xl} <b>${fy(xv)} ${C.xu}</b> → 직선의 예측 <b class="c-move">${fy(A * xv)} ${C.yu}</b></p>`;
+    $('predQ').innerHTML = `<b>🎯 예측해 볼 상황</b><p style="margin-top:6px">${C.predict.name}일 때 ${C.yl}은(는) 얼마일까요?<br><span class="small muted">슬라이더를 오른쪽 끝까지 옮겨 보세요.</span></p>`;
+  };
+  $('predX').addEventListener('input', renderPred);
+
+  /* ===== 2. 숨겨진 데이터 ===== */
+  const renderRev = () => {
+    if (!C) return;
+    const rev = !!store.revealed;
+    $('revealBtn').textContent = rev ? '🔒 다시 숨기기' : '🔓 숨겨진 데이터 공개';
+    bigChart($('revChart'), { reveal: rev });
+    const inErr = mean(C.x.map((xv, i) => Math.abs(C.y[i] - A * xv)));
+    const outErr = mean(C.more.x.map((xv, i) => Math.abs(C.more.y[i] - A * xv)));
+    $('revStats').innerHTML = `<div class="stat"><small>데이터 안 평균 오차</small><span class="big-num c-mine">${fy(inErr)}</span></div>
+      <div class="stat"><small>숨긴 데이터 평균 오차</small><span class="big-num c-pos">${rev ? fy(outErr) : '?'}</span></div>`;
+    const rows = C.more.x.map((xv, i) => {
+      const e = C.more.y[i] - A * xv;
+      return `<tr><td>${C.more.labels ? C.more.labels[i] : ''} ${fy(xv)}</td><td class="mono">${rev ? fy(C.more.y[i]) : '?'}</td><td class="mono">${fy(A * xv)}</td><td class="mono ${rev ? 'big' : ''}">${rev ? (e >= 0 ? '+' : '−') + fy(Math.abs(e)) : '?'}</td></tr>`;
+    }).join('');
+    $('revTable').innerHTML = `<tr><th>${C.xl}<br><small>(${C.xu})</small></th><th>실제 값<br><small>(${C.yu})</small></th><th>직선 예측<br><small>(${C.yu})</small></th><th>오차<br><small>실제 − 예측</small></th></tr>${rows}`;
+  };
+  $('revealBtn').addEventListener('click', () => { store.revealed = !store.revealed; persist(); renderRev(); });
+
+  /* ===== 3. 한계의 원인 ===== */
+  const CAUSES = {
+    air: { ok: '장거리 노선은 더 큰 비행기를 쓰고, 멀리 갈수록 무거운 연료를 싣고 날아야 해서',
+      no: ['멀리 갈수록 항상 맞바람이 불어서', '거리가 멀면 연료 값이 비싸져서'],
+      fb: '먼 노선일수록 1 km당 연료(y ÷ x)가 <b>점점 커져요</b>. 큰 비행기는 무겁고, 실은 연료도 무게라서 그 무게를 나르는 데 연료가 또 들어요. 그래서 그래프가 직선보다 <b>점점 가팔라지는 곡선</b>이 돼요. (아주 짧은 노선에서 1 km당 연료가 조금 큰 것은 이륙하고 높이 올라갈 때 연료가 많이 들기 때문이에요.)',
+      fbNo: { '멀리 갈수록 항상 맞바람이 불어서': '바람은 노선과 날마다 달라서 거리가 멀다고 항상 맞바람이 불지는 않아요.', '거리가 멀면 연료 값이 비싸져서': '연료 값은 돈이에요. 여기서 y는 연료의 양(kg)이라서 값과는 상관이 없어요.' } },
+    plant: { ok: '빛이 많아지면 잎이 광합성으로 처리할 수 있는 양이 한계에 가까워져서',
+      no: ['빛이 많으면 식물이 빛을 피해 자라지 않아서', '측정할 때마다 자를 잘못 읽어서'],
+      fb: '잎이 빛을 쓰는 속도에는 <b>한계</b>가 있어요(광포화). 빛이 적을 때는 빛을 늘리는 만큼 잘 자라지만, 한계에 가까워지면 빛을 더 줘도 덜 자라요. 그래서 그래프가 <b>점점 평평해지는 곡선</b>이 돼요.',
+      fbNo: { '빛이 많으면 식물이 빛을 피해 자라지 않아서': '식물은 빛을 피하지 않아요. 빛이 많아도 여전히 자라지만, 늘어나는 양이 점점 줄어요.', '측정할 때마다 자를 잘못 읽어서': '측정 실수라면 점들이 위아래로 들쭉날쭉해야 해요. 여기서는 일정하게 한쪽으로 휘어요.' } },
+    trade: { ok: '수출이 줄어드는 양은 원래 수출액보다 커질 수 없어서',
+      no: ['관세가 오르면 다른 나라가 오히려 더 많이 사 줘서', '관세는 수출과 아무 관계가 없어서'],
+      fb: '원래 수출액이 약 22억 달러라서 아무리 관세가 올라도 22억 달러보다 많이 줄 수는 없어요. 남은 수출이 적을수록 더 줄어들 양도 적어서 그래프가 <b>점점 평평해지는 곡선</b>이 돼요.',
+      fbNo: { '관세가 오르면 다른 나라가 오히려 더 많이 사 줘서': '관세가 오르면 상대 나라에서 우리 물건값이 비싸져서 보통 덜 사요.', '관세는 수출과 아무 관계가 없어서': '데이터를 보면 관세가 오를수록 수출 감소액이 커져요. 관계가 있어요.' } }
+  };
+  const renderCause = () => {
+    if (!C) return;
+    // 점마다 y ÷ x 막대 (x 순서, 숨긴 데이터는 빨강)
+    const xs = allX(), ys = allY(), bars = xs.map((xv, i) => ({ x: xv, r: ys[i] / xv, hid: i >= C.x.length }));
+    const x = prep($('slopeChart')), rmax = Math.max(A, ...bars.map(b => b.r)) * 1.2;
+    const pad = { l: 62, r: 16, t: 14, b: 58 };
+    const g = frame(x, W, HT, [0, bars.length], [0, rmax], '', `y ÷ x (${C.yu} / ${C.xu})`, pad);
+    x.fillStyle = '#fff'; x.fillRect(0, HT - pad.b + 1, W, pad.b); // 기본 x 눈금(0, 2, 4…)을 지우고 막대마다 x 값을 쓴다
+    bars.forEach((b, i) => {
+      const bw = (g.px(1) - g.px(0)) * 0.68, X0 = g.px(i + 0.5) - bw / 2, col = b.hid ? COL.pos : COL.real;
+      x.fillStyle = col; x.fillRect(X0, g.py(b.r), bw, g.py(0) - g.py(b.r));
+      label(x, fa(b.r), g.px(i + 0.5), g.py(b.r) - 6, col, 'center', '700 10.5px Pretendard, sans-serif');
+      label(x, fy(b.x), g.px(i + 0.5), HT - pad.b + 16, '#6b6880', 'center', '11px Pretendard, sans-serif');
+    });
+    label(x, `${C.xl} (${C.xu}) →`, (pad.l + W - pad.r) / 2, HT - 12, '#4b4860', 'center', '600 13px Pretendard, sans-serif');
+    $('aNote').textContent = `a = ${fa(A)}`;
+    x.strokeStyle = COL.move; x.lineWidth = 2; x.setLineDash([6, 4]); x.beginPath(); x.moveTo(g.px(0), g.py(A)); x.lineTo(g.px(bars.length), g.py(A)); x.stroke(); x.setLineDash([]);
+    // 원인 카드 (순서는 주제마다 고정해 섞어 둔다)
+    const cz = CAUSES[K], opts = K === 'plant' ? [cz.no[0], cz.ok, cz.no[1]] : K === 'trade' ? [cz.no[0], cz.no[1], cz.ok] : [cz.ok, cz.no[0], cz.no[1]];
+    $('causeCards').innerHTML = opts.map(t => `<button data-t="${t.replace(/"/g, '&quot;')}">${t}</button>`).join('');
+    const pick = store.cause;
+    $('causeCards').querySelectorAll('button').forEach(b => { if (b.dataset.t === pick) b.classList.add(pick === cz.ok ? 'right' : 'wrong'); });
+    $('causeFb').innerHTML = !pick ? '' : pick === cz.ok ? `<div class="box key small">✅ ${cz.fb}</div>` : `<div class="box tip small">🤔 ${cz.fbNo[pick]} 다른 것을 골라 보세요.</div>`;
+  };
+  $('causeCards').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; store.cause = b.dataset.t; persist(); renderCause(); });
+
+  /* ===== 4. 탐구 보고서 ===== */
+  const errSummary = () => {
+    if (!C) return '';
+    const i = C.more.x.indexOf(C.predict.x), real = C.more.y[i], pred = A * C.predict.x;
+    return `${C.predict.name}: 직선 예측 ${fy(pred)} ${C.yu}, 실제 ${fy(real)} ${C.yu} (오차 ${fy(Math.abs(real - pred))} ${C.yu})`;
+  };
+  const renderSum = () => {
+    if (!C) { $('autoSum').innerHTML = '1번 화면에서 주제를 골라 주세요.'; return; }
+    $('autoSum').innerHTML = `<b>📋 자동 정리 (보고서에 참고하세요)</b>
+      <ul class="simple" style="margin-top:8px">
+        <li><b>탐구 주제</b>: ${C.icon} ${C.name}: ${C.title} · ${C.q}</li>
+        <li><b>데이터</b>: ${C.x.length}개 (${C.xl} ${fy(Math.min(...C.x))}~${fy(Math.max(...C.x))} ${C.xu}) + 숨겨진 데이터 ${C.more.x.length}개</li>
+        <li><b>찾은 규칙</b>: ${C.yl} ≈ ${fa(A)} × ${C.xl} → ${C.mean(fa(A))}</li>
+        <li><b>예측과 한계</b>: ${errSummary()}</li>
+      </ul>`;
+  };
   const ws = MF.worksheet({
-    lesson: 4, title: '데이터 최적화 실습 2 및 탐구 보고서',
-    q1hint: '오늘 활동에서 가장 인상 깊었던 수학 원리와 그 이유를 써 주세요.',
-    q2: '오늘 내가 다룬 데이터(또는 결과)를 설명해 주세요.',
-    getResult: () => ({})
+    lesson: 4, title: '직선의 한계와 탐구 보고서',
+    resultTitle: '탐구 결과', hideAttach: true,
+    intro: '다섯 칸을 차례로 채우고 이미지로 저장해서 카카오톡에 올려요. 화면마다 쓴 답과 그래프가 자동으로 함께 담겨요. 2·3차시 활동지와 함께 나의 탐구 보고서가 완성돼요.',
+    req: [
+      ['나의 탐구 보고서', '한 칸에 두세 문장씩 써 주세요. 위의 자동 정리와 앞 화면에서 쓴 답을 참고해도 좋아요.', [
+        ['① 탐구 동기: 왜 이 주제를 골랐나요?', '내 진로와 어떻게 이어지나요?'],
+        ['② 탐구 방법: 어떻게 규칙을 찾았나요?', '손실함수와 경사하강법을 어떻게 썼나요?'],
+        ['③ 탐구 결과: 무엇을 찾았나요?', '찾은 a와 그 뜻을 써요.'],
+        ['④ 한계와 원인: 직선은 언제 맞지 않았나요?', '숨겨진 데이터에서 발견한 것과 그 이유를 써요.'],
+        ['⑤ 느낀 점과 더 알아보고 싶은 것', '이번 캠프에서 배운 수학이 내 진로에 어떻게 쓰일까요?']
+      ]],
+      ['캠프 전체 후기', '네 번의 수업에서 가장 기억에 남는 것과 아쉬웠던 점을 자유롭게 써 주세요.']
+    ],
+    check: () => (!C ? '1번 화면에서 탐구 주제를 골라 주세요.' : null),
+    compact: {
+      summary: () => [
+        ['수업', 'AI교과융합 캠프 「손실함수와 경사하강법을 활용한 데이터 최적화」 4차시 · 직선의 한계와 탐구 보고서'],
+        ['탐구 주제', C ? `${C.icon} ${C.name}: ${C.title} (${C.career})` : ''],
+        ['활동 내용', C ? `3차시에 경사하강법으로 찾은 직선 ${C.yl} ≈ ${fa(A)} × ${C.xl}로 데이터 범위 밖을 예측하고, 숨겨진 데이터와 비교해 선형 근사의 한계를 확인함. 구간별 기울기의 변화를 분석해 한계의 원인을 탐구하고 2~4차시 탐구 보고서를 작성함.` : ''],
+        ['예측과 한계', errSummary()],
+        ['고른 원인', store.cause || '']
+      ]
+    },
+    getResult: () => {
+      const c = MF.makeCanvas(W, HT); if (C) bigChart(c, { reveal: true });
+      return { canvas: c, lines: [['탐구 주제', C ? `${C.name}: ${C.title}` : ''], ['예측과 한계', errSummary()]] };
+    }
   });
-  renderers[document.querySelectorAll('.screen').length - 1] = ws.refresh;
+
   /* ===== 시작 ===== */
-  const wiz = MF.wizard({ onShow: i => renderers[i]?.() });
+  if (K) setCase(K);
+  const renderers = [renderPred, renderRev, renderCause, () => { renderSum(); ws.refresh(); }];
+  MF.wizard({ onShow: i => { if (!C && i) MF.toast('1번 화면에서 주제를 먼저 골라 주세요.'); renderers[i]?.(); } });
 })();
 </script>
 </body>
