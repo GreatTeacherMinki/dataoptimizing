@@ -567,7 +567,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025j"></script>
+<script src="assets/common.js?v=20261025k"></script>
 <script>
 (() => {
   /* ===== 1차시와 2차시는 이 파일 하나로 만든다 =====
@@ -1761,24 +1761,25 @@
       x.fillStyle = col; x.fillRect(24, HT - 36, (W - 48) * Math.max(0, Math.min(1, frac)), 20);
     };
     if (caseKey === 'air') {
-      // 출발지에서 오른쪽으로 갈수록 먼 도시. 비행기가 지나간 도시는 진하게, 아직 못 간 도시는 흐리게
+      // 인천에서 출발해 상하이, 홍콩을 경유하는 여행. 경유지를 지나 다시 이륙하면 연료 막대가 한 번에 늘어난다
       x.fillStyle = '#eff6ff'; x.fillRect(0, 0, W, HT - 80);
       const x0 = 46, x1 = W - 40, gy = 150, xm = Math.max(...c.x);
       const pxOf = v => x0 + (x1 - x0) * v / xm, ppx = pxOf(xv);
       x.strokeStyle = '#cbd5e1'; x.lineWidth = 4; x.beginPath(); x.moveTo(x0, gy); x.lineTo(x1, gy); x.stroke();
-      x.strokeStyle = '#2563eb'; x.lineWidth = 4; x.beginPath(); x.moveTo(x0, gy); x.lineTo(ppx, gy); x.stroke();
-      x.font = '700 12px Pretendard, sans-serif'; x.textAlign = 'center';
-      c.x.forEach((v, i) => {
-        const X0 = pxOf(v), passed = v <= xv + 1, up = i % 2 === 0, lvl = Math.floor(i / 2) % 2;
-        dot(x, X0, gy, 6, passed ? '#1e3a8a' : '#cbd5e1');
-        const ty = up ? gy - 22 - lvl * 18 : gy + 24 + lvl * 18;
-        x.strokeStyle = passed ? '#93c5fd' : '#e2e8f0'; x.lineWidth = 1; x.beginPath(); x.moveTo(X0, gy + (up ? -7 : 7)); x.lineTo(X0, ty + (up ? 6 : -10)); x.stroke();
-        x.fillStyle = passed ? '#1e3a8a' : '#94a3b8'; x.fillText(c.labels[i].split('→')[1], X0, ty);
+      x.strokeStyle = '#2563eb'; x.beginPath(); x.moveTo(x0, gy); x.lineTo(ppx, gy); x.stroke();
+      x.font = '700 13px Pretendard, sans-serif'; x.textAlign = 'center';
+      dot(x, x0, gy, 7, '#1e3a8a'); x.fillStyle = '#1e3a8a'; x.fillText('인천', x0, gy + 26);
+      const stops = c.stops.filter(st => st.x <= xm);
+      stops.forEach(st => {
+        const X0 = pxOf(st.x), passed = st.x < xv;
+        dot(x, X0, gy, 8, passed ? '#1e3a8a' : '#cbd5e1');
+        x.fillStyle = passed ? '#1e3a8a' : '#94a3b8'; x.fillText(`${st.name} 경유`, X0, gy + 26);
+        if (passed) { x.fillStyle = '#ea580c'; x.font = '700 12px Pretendard, sans-serif'; x.fillText('🛫 다시 이륙', X0, gy - 22); x.font = '700 13px Pretendard, sans-serif'; }
       });
       x.font = '26px sans-serif'; x.fillText('✈️', ppx, gy - 2);
-      x.font = '700 13px Pretendard, sans-serif'; x.fillStyle = '#1e3a8a'; x.textAlign = 'left'; x.fillText('🛫 출발 (김포·인천)', 10, 24);
-      x.fillStyle = '#64748b'; x.font = '12px Pretendard, sans-serif'; x.fillText('도시는 출발지에서 먼 순서로 늘어놓았어요', 10, 44);
-      bar('⛽ 사용한 연료', xv / xm, '#f59e0b');
+      x.font = '700 13px Pretendard, sans-serif'; x.fillStyle = '#1e3a8a'; x.textAlign = 'left';
+      x.fillText(`경유 ${stops.filter(st => st.x < xv).length}번 · 목적지 방향 →`, 10, 24);
+      bar('⛽ 지금까지 사용한 연료', c.fuel(xv) / c.fuel(xm), '#f59e0b');
     } else if (caseKey === 'plant') {
       // 해: 하루 빛의 양이 많을수록 크고 빛살이 많아진다
       const t = xv / Math.max(...c.x), cx = 130, cy = 120, r = 22 + 22 * t, rays = 6 + Math.round(10 * t);
@@ -1816,7 +1817,7 @@
     const g = frame(x, W, HT, [0, xmax], [0, ymax], niceTicks(0, xmax, 6).filter(v => v <= xmax), niceTicks(0, ymax, 5).filter(v => v <= ymax), `${c.xl} (${c.xu})`, '', pad);
     c.x.forEach((xv, i) => dot(x, g.px(xv), g.py(c.y[i]), 6, COL.real));
     label(x, `${c.yl} (${c.yu})`, pad.l + 6, pad.t + 12, '#4b4860', 'left', '600 12.5px Pretendard, sans-serif');
-    document.getElementById('caseTable').innerHTML = `<tr>${c.labels ? '<th>노선</th>' : '<th>번호</th>'}<th>${c.xl}<br><small>(${c.xu})</small></th><th>${c.yl}<br><small>(${c.yu})</small></th></tr>` +
+    document.getElementById('caseTable').innerHTML = `<tr>${c.labels ? `<th>${c.labelHead || '노선'}</th>` : '<th>번호</th>'}<th>${c.xl}<br><small>(${c.xu})</small></th><th>${c.yl}<br><small>(${c.yu})</small></th></tr>` +
       c.x.map((xv, i) => `<tr><td>${c.labels ? c.labels[i] : NUM[i]}</td><td class="mono">${xv.toLocaleString()}</td><td class="mono">${c.y[i].toLocaleString()}</td></tr>`).join('');
   };
 
