@@ -14,6 +14,11 @@
   .cause-cards button.right { border-color: #16a34a; background: #f0fdf4; }
   .cause-cards button.wrong { border-color: #fda4af; background: #fff1f2; }
   .cause-fb { margin-top: 10px; }
+  .shape-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .shape-cards button { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 4px; font: inherit; font-size: 13px; cursor: pointer; color: var(--ink); }
+  .shape-cards button svg { color: #2563eb; }
+  .shape-cards button.right { border-color: #16a34a; background: #f0fdf4; }
+  .shape-cards button.wrong { border-color: #fda4af; background: #fff1f2; }
   .err-table td.big { color: var(--c-pos); font-weight: 800; }
 </style>
 </head>
@@ -96,23 +101,34 @@
     <div class="step">
       <div class="step-head">
         <div class="step-num">3</div>
-        <div><h2>왜 직선이 맞지 않을까?</h2><p>점마다 <b>y ÷ x</b>(x 1당 y)를 재 보면 데이터가 어떻게 휘는지 보여요. 그다음 그 원인을 찾아봐요.</p></div>
+        <div><h2>왜 직선이 맞지 않을까?</h2><p>숨겨진 데이터까지 모두 놓고 그래프의 <b>모양</b>을 살펴본 뒤, 그 <b>원인</b>을 찾아봐요.</p></div>
         <span class="step-time">13분</span>
       </div>
       <div class="cols wide-left">
         <div>
-          <div class="matrix-label">점마다 y ÷ x <span class="muted" style="font-weight:500">(x 1당 y · 빨강은 숨겨진 데이터)</span></div>
-          <canvas id="slopeChart" class="chart"></canvas>
-          <p class="small muted" style="margin:6px 0 0">y = ax라면 모든 점에서 y ÷ x = a라서 막대 높이가 모두 같아야 해요. 주황 점선이 3차시에 찾은 a예요. (<span id="aNote"></span>)</p>
+          <canvas id="causeChart" class="chart"></canvas>
+          <div class="legend">
+            <span style="color:var(--c-real)">● 3차시 데이터</span>
+            <span style="color:var(--c-pos)">◆ 숨겨진 데이터</span>
+            <span style="color:var(--c-mine)"><i></i>직선 y = ax</span>
+            <span style="color:var(--c-move)" id="modelLegend" hidden><i></i>실제 모델</span>
+          </div>
         </div>
         <div>
-          <div class="box"><b>🤔 원인은 무엇일까요?</b><p class="small" style="margin:4px 0 8px">가장 알맞은 것을 골라 보세요.</p>
+          <div class="box"><b>📈 그래프는 어떤 모양일까요?</b><p class="small" style="margin:4px 0 8px">점들 전체를 이은 모양과 가장 비슷한 것을 골라요.</p>
+            <div class="shape-cards" id="shapeCards"></div>
+          </div>
+          <div class="box" style="margin-top:12px"><b>🤔 원인은 무엇일까요?</b><p class="small" style="margin:4px 0 8px">가장 알맞은 것을 골라 보세요.</p>
             <div class="cause-cards" id="causeCards"></div>
             <div class="cause-fb" id="causeFb"></div>
           </div>
         </div>
       </div>
-      <div class="screen-q" data-fields="y ÷ x의 변화::x가 커질수록 y ÷ x는 어떻게 변하나요? :: ::막대가 점점 높아지나요, 낮아지나요? 주황 점선(a)과 비교해 보세요.|한계의 원인::직선이 맞지 않는 이유를 내 말로 설명해요. :: ::위에서 고른 원인을 내 주제의 낱말로 바꿔 보세요.|⭐ 더 좋은 모델::직선 대신 어떤 모양의 그래프가 더 잘 맞을까요? :: ::점점 가팔라지는 곡선? 점점 평평해지는 곡선? 1차시의 '나이 → 키' 예시를 떠올려 보세요.">🔍 한계의 원인 정리하기</div>
+      <div class="screen-q" data-fields="그래프 모양 묘사::x가 커질수록 그래프는 어떻게 변하나요? 직선과 비교해서 말로 묘사해 보세요. :: ::'처음에는 ___하다가 x가 커질수록 점점 ___해진다'처럼 써 보세요.~~숨겨진 데이터(빨간 마름모)가 직선보다 위에 있나요, 아래에 있나요?|한계의 원인::직선이 맞지 않는 이유를 내 말로 설명해요. :: ::위에서 고른 원인을 내 주제의 낱말로 바꿔 보세요.">🔍 모양과 원인 정리하기</div>
+      <details class="box tip" style="margin-top:14px" id="modelBox">
+        <summary style="cursor:pointer;font-weight:700">⭐ 심화: 실제로는 어떤 함수로 나타낼까?</summary>
+        <div id="modelBody" style="margin-top:8px"></div>
+      </details>
     </div>
   </section>
 
@@ -135,7 +151,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025k"></script>
+<script src="assets/common.js?v=20261025l"></script>
 <script>
 (() => {
   const CASES = MF.CASES;
@@ -185,7 +201,7 @@
     const best = mean(C.x.map((x, i) => x * C.y[i])) / mean(C.x.map(x => x * x));
     const prev = l3(); A = prev.case === k && prev.found != null ? prev.found : best;
     dec = A < 0.1 ? 4 : A < 1 ? 3 : A < 10 ? 2 : 1;
-    if (store.case !== k) { store.case = k; store.revealed = false; store.cause = null; persist(); }
+    if (store.case !== k) { store.case = k; store.revealed = false; store.cause = null; store.shape = null; persist(); }
   };
   const allX = () => [...C.x, ...C.more.x], allY = () => [...C.y, ...C.more.y];
 
@@ -245,10 +261,10 @@
 
   /* ===== 3. 한계의 원인 ===== */
   const CAUSES = {
-    air: { ok: '경유할 때마다 다시 이륙하는 데 연료가 한꺼번에 드는데, 마닐라→시드니는 경유 없이 오래 날아서',
+    air: { ok: '뒤쪽 구간에서 경유가 훨씬 잦아져서, 다시 이륙할 때 드는 연료가 자주 더해져서',
       no: ['멀리 갈수록 항상 맞바람이 불어서', '거리가 멀면 연료 값이 비싸져서'],
-      fb: '연료는 ① 날아간 거리만큼 꾸준히 들고 ② 이륙해서 높이 올라갈 때 한꺼번에 많이 들어요. 3차시 데이터에는 경유가 자주 있어서 ②가 자주 더해졌고, 직선의 기울기 a에도 그만큼 섞여 들어갔어요. 그런데 마닐라→시드니처럼 경유 없이 오래 나는 구간에는 ②가 없어서 1 km당 연료(y ÷ x)가 점점 작아지고, 직선은 연료를 <b>너무 많게</b> 예측해요.',
-      fbNo: { '멀리 갈수록 항상 맞바람이 불어서': '맞바람이 분다면 연료가 직선보다 더 들어야 해요. 그런데 숨겨진 데이터는 직선보다 연료가 적게 들었어요.', '거리가 멀면 연료 값이 비싸져서': '연료 값은 돈이에요. 여기서 y는 연료의 양(kg)이라서 값과는 상관이 없어요.' } },
+      fb: '연료는 ① 날아간 거리만큼 꾸준히 들고 ② 이륙해서 높이 올라갈 때 한꺼번에 많이 들어요. 3차시 데이터는 약 1,100 km마다 경유했는데, 뒤쪽 구간은 섬 공항을 400 km마다 경유해서 ②가 훨씬 자주 더해져요. 그래서 갈수록 직선보다 연료가 많이 들고, 그래프는 <b>점점 가팔라지는 모양</b>이 돼요.',
+      fbNo: { '멀리 갈수록 항상 맞바람이 불어서': '바람은 날마다, 노선마다 달라서 갈수록 계속 커지는 차이를 설명하기 어려워요. 2번 화면의 표에서 경유 횟수를 확인해 보세요.', '거리가 멀면 연료 값이 비싸져서': '연료 값은 돈이에요. 여기서 y는 연료의 양(kg)이라서 값과는 상관이 없어요.' } },
     plant: { ok: '빛이 많아지면 잎이 광합성으로 처리할 수 있는 양이 한계에 가까워져서',
       no: ['빛이 많으면 식물이 빛을 피해 자라지 않아서', '측정할 때마다 자를 잘못 읽어서'],
       fb: '잎이 빛을 쓰는 속도에는 <b>한계</b>가 있어요(광포화). 빛이 적을 때는 빛을 늘리는 만큼 잘 자라지만, 한계에 가까워지면 빛을 더 줘도 덜 자라요. 그래서 그래프가 <b>점점 평평해지는 곡선</b>이 돼요.',
@@ -258,23 +274,30 @@
       fb: '원래 수출액이 약 22억 달러라서 아무리 관세가 올라도 22억 달러보다 많이 줄 수는 없어요. 남은 수출이 적을수록 더 줄어들 양도 적어서 그래프가 <b>점점 평평해지는 곡선</b>이 돼요.',
       fbNo: { '관세가 오르면 다른 나라가 오히려 더 많이 사 줘서': '관세가 오르면 상대 나라에서 우리 물건값이 비싸져서 보통 덜 사요.', '관세는 수출과 아무 관계가 없어서': '데이터를 보면 관세가 오를수록 수출 감소액이 커져요. 관계가 있어요.' } }
   };
+  const SHAPES = [
+    { k: 'up', t: '점점 가팔라지는 곡선', d: 'M6 54 Q40 50 74 6' },
+    { k: 'line', t: '곧은 직선', d: 'M6 54 L74 6' },
+    { k: 'flat', t: '점점 평평해지는 곡선', d: 'M6 54 Q20 12 74 8' }
+  ];
+  const SHAPE_OK = { air: 'up', plant: 'flat', trade: 'flat' };
+  $('shapeCards').innerHTML = SHAPES.map(sh => `<button data-s="${sh.k}"><svg viewBox="0 0 80 60" width="64" height="48" aria-hidden="true"><path d="${sh.d}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg><span>${sh.t}</span></button>`).join('');
+  $('shapeCards').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; store.shape = b.dataset.s; persist(); renderCause(); });
+  $('modelBox').addEventListener('toggle', () => renderCause());
   const renderCause = () => {
     if (!C) return;
-    // 점마다 y ÷ x 막대 (x 순서, 숨긴 데이터는 빨강)
-    const xs = allX(), ys = allY(), bars = xs.map((xv, i) => ({ x: xv, r: ys[i] / xv, hid: i >= C.x.length }));
-    const x = prep($('slopeChart')), rmax = Math.max(A, ...bars.map(b => b.r)) * 1.2;
-    const pad = { l: 62, r: 16, t: 14, b: 58 };
-    const g = frame(x, W, HT, [0, bars.length], [0, rmax], '', `y ÷ x (${C.yu} / ${C.xu})`, pad);
-    x.fillStyle = '#fff'; x.fillRect(0, HT - pad.b + 1, W, pad.b); // 기본 x 눈금(0, 2, 4…)을 지우고 막대마다 x 값을 쓴다
-    bars.forEach((b, i) => {
-      const bw = (g.px(1) - g.px(0)) * 0.68, X0 = g.px(i + 0.5) - bw / 2, col = b.hid ? COL.pos : COL.real;
-      x.fillStyle = col; x.fillRect(X0, g.py(b.r), bw, g.py(0) - g.py(b.r));
-      label(x, fa(b.r), g.px(i + 0.5), g.py(b.r) - 6, col, 'center', '700 10.5px Pretendard, sans-serif');
-      label(x, fy(b.x), g.px(i + 0.5), HT - pad.b + 16, '#6b6880', 'center', '11px Pretendard, sans-serif');
-    });
-    label(x, `${C.xl} (${C.xu}) →`, (pad.l + W - pad.r) / 2, HT - 12, '#4b4860', 'center', '600 13px Pretendard, sans-serif');
-    $('aNote').textContent = `a = ${fa(A)}`;
-    x.strokeStyle = COL.move; x.lineWidth = 2; x.setLineDash([6, 4]); x.beginPath(); x.moveTo(g.px(0), g.py(A)); x.lineTo(g.px(bars.length), g.py(A)); x.stroke(); x.setLineDash([]);
+    // 전체 데이터 + 직선 (+ 심화를 열면 실제 모델 곡선)
+    const showModel = $('modelBox').open, g = bigChart($('causeChart'), { reveal: true }), x = $('causeChart').getContext('2d');
+    $('modelLegend').hidden = !showModel;
+    if (showModel) {
+      g.clip(); x.strokeStyle = COL.move; x.lineWidth = 3; x.beginPath();
+      const xm = C.predict.x * 1.06;
+      for (let k = 0; k <= 400; k++) { const t = xm * k / 400, X0 = g.px(t), Y0 = g.py(C.model.f(t)); k ? x.lineTo(X0, Y0) : x.moveTo(X0, Y0); }
+      x.stroke(); x.restore();
+    }
+    $('modelBody').innerHTML = `<p><b>${C.model.name}</b></p><p class="mono" style="margin:6px 0;font-size:16px"><b>${C.model.formula}</b></p><p class="small">${C.model.text}</p><p class="small muted" style="margin-top:6px">주황 곡선이 이 함수의 그래프예요. 직선보다 숨겨진 데이터까지 훨씬 잘 맞아요.</p>`;
+    // 그래프 모양 고르기
+    const sh = store.shape, okShape = SHAPE_OK[K];
+    $('shapeCards').querySelectorAll('button').forEach(b => { b.classList.toggle('right', b.dataset.s === sh && sh === okShape); b.classList.toggle('wrong', b.dataset.s === sh && sh !== okShape); });
     // 원인 카드 (순서는 주제마다 고정해 섞어 둔다)
     const cz = CAUSES[K], opts = K === 'plant' ? [cz.no[0], cz.ok, cz.no[1]] : K === 'trade' ? [cz.no[0], cz.no[1], cz.ok] : [cz.ok, cz.no[0], cz.no[1]];
     $('causeCards').innerHTML = opts.map(t => `<button data-t="${t.replace(/"/g, '&quot;')}">${t}</button>`).join('');
@@ -321,6 +344,7 @@
         ['탐구 주제', C ? `${C.icon} ${C.name}: ${C.title} (${C.career})` : ''],
         ['활동 내용', C ? `3차시에 경사하강법으로 찾은 직선 ${C.yl} ≈ ${fa(A)} × ${C.xl}로 데이터 범위 밖을 예측하고, 숨겨진 데이터와 비교해 선형 근사의 한계를 확인함. 구간별 기울기의 변화를 분석해 한계의 원인을 탐구하고 2~4차시 탐구 보고서를 작성함.` : ''],
         ['예측과 한계', errSummary()],
+        ['그래프 모양', (SHAPES.find(v => v.k === store.shape) || {}).t || ''],
         ['고른 원인', store.cause || '']
       ]
     },
