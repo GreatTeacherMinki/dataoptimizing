@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="assets/common.css?v=20261025e">
 <link rel="stylesheet" href="assets/theme.css?v=20261023">
-<link rel="stylesheet" href="assets/lesson.css?v=20261025e">
+<link rel="stylesheet" href="assets/lesson.css?v=20261025g">
 </head>
 <body>
 <header class="topbar">
@@ -81,6 +81,7 @@
           <div class="matrix-label" style="margin-top:10px">기록한 a와 손실 <span class="muted" style="font-weight:500">(점 하나 = 기록 하나)</span></div>
           <canvas id="trailChart" class="chart"></canvas>
           <label class="toggle" style="margin-top:6px"><input type="checkbox" id="showCurve"> 손실 곡선 L(a) 보기</label>
+          <p class="small muted" style="margin:4px 0 0">그래프의 가로 범위는 기록한 a에 맞춰 자동으로 확대돼요.</p>
         </div>
       </div>
       <div class="screen-q" data-table="시도 1|시도 2|시도 3|손실이 가장 작았던 a" data-cols="a|손실" data-note="✏️ a를 바꿔 기록한 값을 적어요 · 활동지에 함께 저장돼요" data-hint="직선이 점들 사이를 고르게 지나가도록 a를 바꿔 보세요.|기록한 점들이 그릇 모양으로 놓이나요? 그릇의 바닥이 손실이 가장 작은 곳이에요.">🎯 미션: a를 세 번 이상 바꿔 손실 기록하기</div>
@@ -235,11 +236,17 @@
   caseBtns.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; MF.setCase(b.dataset.k); setCase(b.dataset.k); renderIntro(); });
   // 2차시 활동지에 남긴 기울기 짐작 (같은 컴퓨터에서만 보인다)
   const prevPlan = () => { try { const d = JSON.parse(localStorage.getItem('mf-ws-2')) || {}; return { slope: (d.x_plSlope || '').trim(), topic: d.x_plTopic || '' }; } catch (e) { return { slope: '' }; } };
-  const prevHTML = () => {
-    const p = prevPlan();
-    return p.slope ? `<b>📝 2차시에 내가 짐작한 기울기</b><p style="margin-top:6px">${p.slope.replace(/[<>&]/g, '')}</p>`
-      : `<b>📝 2차시에 짐작한 기울기</b><p style="margin-top:6px" class="small">이 컴퓨터에는 2차시 기록이 없어요. 2차시 활동지에 쓴 기울기 짐작을 떠올려 보세요.</p>`;
+  // 기록이 없으면(다른 컴퓨터 등) 1번 화면에서 직접 적게 하고 store.guess에 저장한다
+  const escH = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  const guessText = () => prevPlan().slope || (store.guess || '').trim();
+  const prevHTML = (editable = false) => {
+    const p = prevPlan(), head = '<b>📝 2차시 탐구 계획서 ③ 기울기 짐작하기</b>';
+    if (p.slope) return `${head}<p style="margin-top:6px">${escH(p.slope)}</p>`;
+    if (editable) return `${head}<p style="margin-top:6px" class="small">이 컴퓨터에는 2차시 기록이 없어요. 2차시 활동지 사진을 보고 짐작한 기울기를 적어 주세요.</p>
+      <input type="text" id="guessIn" maxlength="120" style="margin-top:6px;width:100%" placeholder="예: x가 1 늘면 y는 약 ○ 늘 것 같다" value="${escH(store.guess || '')}">`;
+    return `${head}<p style="margin-top:6px">${store.guess ? escH(store.guess) : '<span class="small muted">기록이 없어요. 1번 화면에서 적을 수 있어요.</span>'}</p>`;
   };
+  document.addEventListener('input', e => { if (e.target.id === 'guessIn') { store.guess = e.target.value; persist(); } });
   const dataChart = (cv, a, opts = {}) => {
     const x = prep(cv), xr = [0, Math.max(...C.x) * 1.08], yr = [0, Math.max(...C.y) * 1.15];
     const g = frame(x, W, HT, xr, yr, `${C.xl} (${C.xu})`, `${C.yl} (${C.yu})`);
@@ -259,7 +266,7 @@
     $('introBody').style.display = C ? '' : 'none'; $('introNone').style.display = C ? 'none' : '';
     if (!C) return;
     $('caseQ').textContent = C.q;
-    $('prevGuess').innerHTML = prevHTML();
+    $('prevGuess').innerHTML = prevHTML(true);
     dataChart($('introChart'));
   };
 
@@ -272,14 +279,22 @@
     $('fitL').textContent = fL(loss(a));
     dataChart($('fitChart'), a, { err: true });
     // 기록한 (a, 손실) 점
+    // 가로 범위는 기록한 a와 지금 a 주변으로 자동 확대한다.
+    // (a 전체 범위로 그리면 손실 값이 너무 커서 바닥 근처의 차이가 보이지 않는다)
     const x = prep($('trailChart'), W, 260), tries = store.tries || [];
-    const lmax = Math.max(loss(0), loss(A_MAX)) * 1.05;
-    const g = frame(x, W, 260, [0, A_MAX], [0, lmax], '기울기 a', '손실', { l: 70, r: 16, t: 14, b: 46 });
+    const pts = [...tries, a];
+    let lo = Math.min(...pts), hi = Math.max(...pts);
+    const minW = A_BEST * 0.3;
+    if (hi - lo < minW) { const c = (lo + hi) / 2; lo = c - minW / 2; hi = c + minW / 2; }
+    const padA = (hi - lo) * 0.12; lo = Math.max(0, lo - padA); hi = Math.min(A_MAX, hi + padA);
+    const lmax = Math.max(loss(lo), loss(hi), ...pts.map(loss)) * 1.12;
+    const g = frame(x, W, 260, [lo, hi], [0, lmax], '기울기 a', '손실', { l: 78, r: 16, t: 14, b: 46 });
     if ($('showCurve').checked) {
       g.clip(); x.strokeStyle = COL.loss; x.lineWidth = 2.5; x.beginPath();
-      for (let k = 0; k <= 200; k++) { const t = A_MAX * k / 200; k ? x.lineTo(g.px(t), g.py(loss(t))) : x.moveTo(g.px(t), g.py(loss(t))); }
+      for (let k = 0; k <= 200; k++) { const t = lo + (hi - lo) * k / 200; k ? x.lineTo(g.px(t), g.py(loss(t))) : x.moveTo(g.px(t), g.py(loss(t))); }
       x.stroke(); x.restore();
     }
+    tries.forEach(t => label(x, fL(loss(t)), g.px(t), g.py(loss(t)) - 9, COL.loss, 'center', '700 11px Pretendard, sans-serif'));
     tries.forEach(t => dot(x, g.px(t), g.py(loss(t)), 5.5, COL.loss));
     dot(x, g.px(a), g.py(loss(a)), 4, COL.mine);
   };
@@ -392,6 +407,7 @@
         ['탐구 주제', C ? `${C.icon} ${C.name}: ${C.title}` : ''],
         ['활동 내용', C ? `${C.title} 데이터 ${C.x.length}개를 y = ax로 근사함. 기울기 a를 바꾸며 손실(오차²의 평균)을 비교하고, 경사하강법 a(n+1) = a(n) − η × L′(a(n))으로 손실이 가장 작은 a ≈ ${fa(foundA())}를 찾음. 보폭에 따른 수렴 과정을 비교하고 a의 뜻을 해석함.` : ''],
         ['찾은 규칙', C ? `${C.yl} ≈ ${fa(foundA())} × ${C.xl} (손실 ${fL(loss(foundA()))})` : ''],
+        ['2차시 기울기 짐작', guessText()],
         ['경사하강법 실험', runList().join(' / ')]
       ]
     },
