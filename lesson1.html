@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>1차시 데이터 최적화와 손실함수</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/common.css?v=20261025c">
+<link rel="stylesheet" href="assets/common.css?v=20261025d">
 <link rel="stylesheet" href="assets/theme.css?v=20261022d">
 <style>
   /* 그림과 식을 같은 색으로 잇는다 */
@@ -83,6 +83,13 @@
   .gal-tabs button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; color: var(--ink); }
   .gal-tabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
   .gal-tabs button.bad { border-color: #fda4af; }
+  .case-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 700px) { .case-btns { grid-template-columns: 1fr; } }
+  .case-btns button { text-align: left; border: 2px solid var(--line); background: #fff; border-radius: 14px; padding: 12px 14px; font: inherit; cursor: pointer; color: var(--ink); }
+  .case-btns button .ic { font-size: 26px; }
+  .case-btns button b { display: block; font-size: 16px; margin-top: 2px; }
+  .case-btns button small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .case-btns button.on { border-color: var(--c-mine, #2563eb); background: #eff6ff; }
   .gal-tabs button.bad.on { background: #be123c; border-color: #be123c; }
   @media (max-width: 960px) { .why-grid { grid-template-columns: 1fr; } }
   .why { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: #fff; }
@@ -614,10 +621,68 @@
     <div class="step">
       <div class="step-head">
         <div class="step-num">3</div>
-        <div><h2>내 진로와 데이터 연결하기</h2><p>1차시 진로 조사를 바탕으로, 3·4차시에 최적화할 <b>나의 데이터</b>를 정해요.</p></div>
+        <div><h2>내 진로와 데이터 연결하기</h2><p>1차시에 쓴 진로와 궁금증으로 선생님이 탐구 주제 3개를 준비했어요. <b>내 주제</b>를 골라 데이터를 해석해요. 이 데이터로 3·4차시에 최적화를 해요.</p></div>
         <span class="step-time">12분</span>
       </div>
-      <div class="placeholder"><b>📝 내용 준비 중</b>1차시 진로 조사 결과를 보고 선생님이 데이터 수집 양식과 예시 데이터를 준비해요.</div>
+      <div class="subnav" data-subnav></div>
+
+      <!-- ① 주제 고르기 -->
+      <div class="sub" data-sub="주제 고르기">
+        <div class="part-h"><span class="no">1</span><div><h3>내 탐구 주제 고르기</h3><p>내 진로와 가까운 주제를 눌러요. 그러면 어떤 상황인지 그림으로 볼 수 있어요.</p></div></div>
+        <div class="case-btns" id="caseBtns"></div>
+        <div id="caseScene" style="margin-top:14px">
+          <div class="cols wide-left">
+            <div>
+              <canvas id="sceneCv" class="chart"></canvas>
+              <div class="slider-row" style="margin-top:8px"><label id="sceneLbl" style="min-width:110px"></label><input type="range" id="sceneX" min="0" max="100" step="1" value="40"><output id="sceneXo"></output></div>
+            </div>
+            <div>
+              <div class="box key"><b>🔎 탐구 질문</b><p id="caseQ" style="margin-top:6px;font-size:17px;font-weight:700"></p></div>
+              <ul class="simple" style="margin-top:12px;font-size:15px">
+                <li><b>원인 x</b>: <span id="caseX"></span></li>
+                <li><b>결과 y</b>: <span id="caseY"></span></li>
+                <li><b>관련 진로</b>: <span id="caseCareer"></span></li>
+              </ul>
+              <p class="small muted" style="margin-top:8px">슬라이더로 x를 바꾸며 y가 어떻게 변하는지 그림으로 느껴 보세요. 정확한 숫자는 다음 단계의 데이터에서 봐요.</p>
+            </div>
+          </div>
+        </div>
+        <div id="caseNone" class="placeholder" style="margin-top:14px"><b>👆 위에서 주제를 하나 골라 주세요</b>고르면 상황 그림이 나와요.</div>
+      </div>
+
+      <!-- ② 데이터 보기 -->
+      <div class="sub" data-sub="데이터 보기">
+        <div class="part-h"><span class="no">2</span><div><h3>데이터 살펴보기</h3><p>선생님이 준비한 데이터예요. 표와 점 그래프를 보고 점들이 어떻게 놓여 있는지 살펴봐요.</p></div></div>
+        <div class="cols wide-left">
+          <div>
+            <canvas id="caseChart" class="chart"></canvas>
+            <p class="small muted" style="margin:6px 0 0">※ 실제 경향을 바탕으로 수업용으로 단순화한 예시 데이터예요.</p>
+          </div>
+          <div><div style="max-height:360px;overflow-y:auto"><table class="err-table" id="caseTable"></table></div></div>
+        </div>
+      </div>
+
+      <!-- ③ 양식 채우기 -->
+      <div class="sub" data-sub="양식 채우기">
+        <div class="part-h"><span class="no">3</span><div><h3>나의 탐구 계획서</h3><p>데이터를 해석해서 칸을 채워요. 이 계획서가 4차시 탐구 보고서의 첫 부분이 돼요.</p></div></div>
+        <div class="survey">
+          <label><b>희망 진로</b><span>1차시에 쓴 진로를 다시 적어요.</span><input type="text" id="plCareer" maxlength="60" placeholder="예: 파일럿"></label>
+          <label><b>고른 주제</b><span>①단계에서 고른 주제가 자동으로 들어가요.</span><input type="text" id="plTopic" readonly></label>
+          <label class="full"><b>① 이 주제를 고른 이유</b><span>내 진로나 관심과 어떻게 이어지나요?</span><textarea id="plWhy" rows="2" maxlength="300" placeholder="예: 나는 ○○이(가) 꿈인데, 이 일을 할 때 △△을(를) 미리 알아야 해서"></textarea></label>
+          <label class="full"><b>② 점들의 모양</b><span>점 그래프를 보고 x가 커질 때 y가 어떻게 변하는지 써요.</span><textarea id="plShape" rows="2" maxlength="300" placeholder="예: x가 커질수록 y도 커지고, 점들이 거의 한 줄로 놓여 있어요."></textarea></label>
+          <label class="full"><b>③ 기울기 짐작하기</b><span>표에서 두 점을 골라 "x가 1 늘 때 y가 얼마나 늘까?"를 계산해 봐요. (y의 차이 ÷ x의 차이)</span><textarea id="plSlope" rows="2" maxlength="300" placeholder="예: (1차시 자전거) 두 점 (0.2, 3.4)와 (1.0, 14.6)을 골랐어요. (14.6 − 3.4) ÷ (1.0 − 0.2) = 14 → 1시간 더 타면 약 14 km 더 가요."></textarea></label>
+          <label class="full"><b>④ 진로와 연결하기</b><span>이 규칙을 알면 내 진로에서 어디에 쓸 수 있을까요?</span><textarea id="plUse" rows="2" maxlength="300" placeholder="예: ○○만 알면 △△을(를) 미리 예측할 수 있어요."></textarea></label>
+          <label class="full"><b>⭐ 도전: 이 규칙이 언제까지 맞을까?</b><span>x가 데이터보다 훨씬 커져도 점들이 계속 한 줄로 놓일까요? 그렇게 생각한 이유는? (4차시에 확인해요)</span><textarea id="plLimit" rows="2" maxlength="300"></textarea></label>
+        </div>
+        <details class="box tip small" style="margin-top:14px">
+          <summary style="cursor:pointer;font-weight:700">💡 힌트 보기</summary>
+          <ul class="simple" style="margin-top:8px">
+            <li>③ 표에서 x가 많이 차이 나는 두 점(처음과 끝)을 고르면 계산하기 쉬워요.</li>
+            <li>③ 1차시 선수 학습의 <b>기울기 = y의 변화량 ÷ x의 변화량</b>을 떠올려 보세요.</li>
+            <li>⭐ x가 아주 커지는 상황을 상상해 보세요. 비행기는 지구 반대편까지, 식물은 하루 24시간 빛, 관세는 100%까지 올라가면?</li>
+          </ul>
+        </details>
+      </div>
     </div>
   </section>
 
@@ -731,7 +796,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025c"></script>
+<script src="assets/common.js?v=20261025d"></script>
 <script>
 (() => {
   /* ===== 1차시와 2차시는 이 파일 하나로 만든다 =====
@@ -1834,8 +1899,13 @@
         ['수업', 'AI교과융합 캠프 「손실함수와 경사하강법을 활용한 데이터 최적화」 2차시 · 경사하강법과 데이터 선정'],
         ['활동 내용', '기울기(미분계수)의 부호로 이동 방향을 정하는 원리를 이해하고, 경사하강법 a(n+1) = a(n) − η × L′(a(n))으로 골짜기가 여러 개인 손실 곡선을 탐색함. 보폭(학습률)을 바꾸며 수렴, 진동, 손실 증가를 비교함.'],
         ['실험 기록', runList().join(' / ')]
-      ]
+      ],
+      sections: () => [['나의 탐구 계획서', planRows()]]
     },
+    check: () => (!CASES[caseKey] ? '3번 화면(데이터 선정)에서 탐구 주제를 골라 주세요.' : null),
+    records: () => ({
+      '데이터 선정': planRows()
+    }),
     getResult: () => {
       const runs = runList();
       return { canvas: resultCanvas(), lines: [
@@ -1891,6 +1961,107 @@
   [[svCareer, 'career'], [svField, 'field'], [svSubject, 'subject'], [svMath, 'math'], [svQuestion, 'question'], [svFieldEtc, 'fieldEtc'], [svLevel, 'level'], [svHard, 'hard'], [svReview, 'review']].forEach(([el, k]) => ws.bind(el, k));
   const syncEtc = () => { svFieldEtc.style.display = svField.value === '기타' ? '' : 'none'; };
   svField.addEventListener('change', syncEtc); svField.addEventListener('input', syncEtc); syncEtc();
+  /* ===== 2차시 ③ 데이터 선정: 주제 고르기 → 상황 그림 → 데이터 → 탐구 계획서 =====
+   * 사례 데이터는 common.js의 MF.CASES. 고른 주제는 MF.setCase로 저장해서 3·4차시가 이어 쓴다.
+   */
+  const CASES = MF.CASES;
+  let caseKey = CASES[MF.getCase()] ? MF.getCase() : '';
+  const caseBtns = document.getElementById('caseBtns'), sceneX = document.getElementById('sceneX');
+  caseBtns.innerHTML = Object.entries(CASES).map(([k, c]) => `<button data-k="${k}"><span class="ic">${c.icon}</span><b>${c.name}: ${c.title}</b><small>${c.career}</small></button>`).join('');
+  const plCareer = document.getElementById('plCareer'), plTopic = document.getElementById('plTopic');
+  const plIds = ['plCareer', 'plTopic', 'plWhy', 'plShape', 'plSlope', 'plUse', 'plLimit'];
+  plIds.forEach(id => ws.bind(document.getElementById(id), id));
+  const planRows = () => [['고른 주제', plTopic.value], ...[['plCareer', '희망 진로'], ['plWhy', '① 이 주제를 고른 이유'], ['plShape', '② 점들의 모양'], ['plSlope', '③ 기울기 짐작하기'], ['plUse', '④ 진로와 연결하기'], ['plLimit', '⭐ 이 규칙이 언제까지 맞을까?']].map(([id, k]) => [k, document.getElementById(id).value])];
+  const caseSlope = c => c.x.reduce((s, x, i) => s + x * c.y[i], 0) / c.x.reduce((s, x) => s + x * x, 0);
+  const caseX = c => Math.max(...c.x) * sceneX.value / 100;
+  const numFmt = v => (Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : String(Math.round(v * 10) / 10));
+
+  // 상황 그림 (숫자 없이 크고 작음만 보여 준다)
+  const drawScene = () => {
+    const c = CASES[caseKey]; if (!c) return;
+    const cv = document.getElementById('sceneCv'), x = prep(cv, W, HT), xv = caseX(c), t = sceneX.value / 100;
+    document.getElementById('sceneLbl').textContent = c.xl;
+    document.getElementById('sceneXo').textContent = `${numFmt(xv)} ${c.xu}`;
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, HT);
+    x.textBaseline = 'middle';
+    const bar = (lbl, frac, col) => {
+      x.fillStyle = '#4b4860'; x.font = '700 14px Pretendard, sans-serif'; x.textAlign = 'left'; x.fillText(lbl, 24, HT - 52);
+      x.fillStyle = '#eef0f6'; x.fillRect(24, HT - 36, W - 48, 20);
+      x.fillStyle = col; x.fillRect(24, HT - 36, (W - 48) * Math.max(0, Math.min(1, frac)), 20);
+    };
+    if (caseKey === 'air') {
+      x.fillStyle = '#eff6ff'; x.fillRect(0, 0, W, HT - 80);
+      const x0 = 50, x1 = W - 50, px = x0 + (x1 - x0) * t, gy = HT - 120;
+      x.strokeStyle = '#93c5fd'; x.setLineDash([6, 6]); x.lineWidth = 2; x.beginPath(); x.moveTo(x0, gy); x.quadraticCurveTo((x0 + px) / 2, gy - 120 * t - 20, px, gy); x.stroke(); x.setLineDash([]);
+      x.font = '28px sans-serif'; x.textAlign = 'center'; x.fillText('🛫', x0, gy + 4); x.fillText('🛬', px, gy + 4);
+      x.font = '700 13px Pretendard, sans-serif'; x.fillStyle = '#1e3a8a'; x.fillText('출발', x0, gy + 30);
+      let near = 0; c.x.forEach((v, i) => { if (Math.abs(v - xv) < Math.abs(c.x[near] - xv)) near = i; });
+      x.fillText(Math.abs(c.x[near] - xv) < 120 ? c.labels[near].split('→')[1] : '도착', px, gy + 30);
+      bar('⛽ 사용한 연료', xv / Math.max(...c.x), '#f59e0b');
+    } else if (caseKey === 'plant') {
+      const cx = 130, cy = 130, r = 80, hrs = xv;
+      x.fillStyle = '#1e293b'; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#fde047'; x.beginPath(); x.moveTo(cx, cy); x.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * hrs / 24); x.closePath(); x.fill();
+      x.fillStyle = '#4b4860'; x.font = '700 13px Pretendard, sans-serif'; x.textAlign = 'center'; x.fillText('하루 24시간 중 빛 ☀️', cx, cy + r + 18);
+      const base = HT - 70, potX = 380, grow = caseSlope(c) * hrs * 26;
+      x.fillStyle = '#b45309'; x.beginPath(); x.moveTo(potX - 40, base - 40); x.lineTo(potX + 40, base - 40); x.lineTo(potX + 30, base); x.lineTo(potX - 30, base); x.closePath(); x.fill();
+      x.strokeStyle = '#94a3b8'; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(potX - 70, base - 60); x.lineTo(potX + 70, base - 60); x.stroke(); x.setLineDash([]);
+      x.strokeStyle = '#16a34a'; x.lineWidth = 6; x.beginPath(); x.moveTo(potX, base - 40); x.lineTo(potX, base - 60 - grow); x.stroke();
+      x.fillStyle = '#22c55e'; [[-1, 0.4], [1, 0.7], [-1, 1]].forEach(([s, f]) => { const yy = base - 60 - grow * f; x.beginPath(); x.ellipse(potX + s * 16, yy, 16, 7, s * -0.5, 0, Math.PI * 2); x.fill(); });
+      x.fillStyle = '#4b4860'; x.textAlign = 'left'; x.fillText('지난주 키', potX + 74, base - 60);
+      x.fillStyle = '#16a34a'; x.fillText('1주 동안 자란 만큼 ↑', potX + 20, base - 70 - grow);
+    } else {
+      const lx = 70, rx = W - 70, gy = 150;
+      x.fillStyle = '#e0f2fe'; x.fillRect(0, gy + 20, W, 60);
+      x.font = '34px sans-serif'; x.textAlign = 'center'; x.fillText('🏭', lx, gy - 10); x.fillText('🏙️', rx, gy - 10);
+      x.font = '700 13px Pretendard, sans-serif'; x.fillStyle = '#4b4860'; x.fillText('우리나라', lx, gy + 22); x.fillText('상대 나라', rx, gy + 22);
+      x.fillStyle = '#e11d48'; x.fillRect(W / 2 - 4, gy - 60, 8, 130);
+      x.fillText(`관세 +${numFmt(xv)}%p`, W / 2, gy - 72);
+      const total = 12, left = Math.max(0, Math.round(total * (1 - caseSlope(c) * xv / 22)));
+      x.font = '18px sans-serif';
+      for (let k = 0; k < total; k++) { x.globalAlpha = k < left ? 1 : 0.15; x.fillText('📦', 112 + (k % 6) * 22, gy + 40 + Math.floor(k / 6) * 20); }
+      x.globalAlpha = 1; x.font = '30px sans-serif'; x.fillText('🚢', 168, gy + 84);
+      bar('📉 줄어든 수출', caseSlope(c) * xv / 22, '#e11d48');
+    }
+  };
+
+  const drawCaseChart = () => {
+    const c = CASES[caseKey]; if (!c) return;
+    const cv = document.getElementById('caseChart'), x = prep(cv, W, HT);
+    const xmax = Math.max(...c.x) * 1.08, ymax = Math.max(...c.y) * 1.15, pad = { l: 62, r: 16, t: 14, b: 46 };
+    const g = frame(x, W, HT, [0, xmax], [0, ymax], niceTicks(0, xmax, 6).filter(v => v <= xmax), niceTicks(0, ymax, 5).filter(v => v <= ymax), `${c.xl} (${c.xu})`, '', pad);
+    c.x.forEach((xv, i) => dot(x, g.px(xv), g.py(c.y[i]), 6, COL.real));
+    label(x, `${c.yl} (${c.yu})`, pad.l + 6, pad.t + 12, '#4b4860', 'left', '600 12.5px Pretendard, sans-serif');
+    document.getElementById('caseTable').innerHTML = `<tr>${c.labels ? '<th>노선</th>' : '<th>번호</th>'}<th>${c.xl}<br><small>(${c.xu})</small></th><th>${c.yl}<br><small>(${c.yu})</small></th></tr>` +
+      c.x.map((xv, i) => `<tr><td>${c.labels ? c.labels[i] : NUM[i]}</td><td class="mono">${xv.toLocaleString()}</td><td class="mono">${c.y[i].toLocaleString()}</td></tr>`).join('');
+  };
+
+  const renderCase = () => {
+    const c = CASES[caseKey];
+    caseBtns.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === caseKey));
+    document.getElementById('caseScene').style.display = c ? '' : 'none';
+    document.getElementById('caseNone').style.display = c ? 'none' : '';
+    if (!c) return;
+    document.getElementById('caseQ').textContent = c.q;
+    document.getElementById('caseX').textContent = `${c.xl} (${c.xu})`;
+    document.getElementById('caseY').textContent = `${c.yl} (${c.yu})`;
+    document.getElementById('caseCareer').textContent = c.career;
+    drawScene(); drawCaseChart();
+  };
+  caseBtns.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    caseKey = b.dataset.k; MF.setCase(caseKey);
+    const c = CASES[caseKey];
+    plTopic.value = `${c.icon} ${c.name}: ${c.title}`; plTopic.dispatchEvent(new Event('input'));
+    renderCase();
+  });
+  sceneX.addEventListener('input', drawScene);
+  renderers.data = () => {
+    // 1차시 활동지에 쓴 희망 진로가 이 컴퓨터에 남아 있으면 채워 준다
+    let prev = ''; try { prev = (JSON.parse(localStorage.getItem('mf-ws-1')) || {}).x_career || ''; } catch (e) {}
+    if (!plCareer.value.trim() && prev.trim()) { plCareer.value = prev; plCareer.dispatchEvent(new Event('input')); }
+    renderCase();
+  };
   renderers.sum1 = () => { renderSummary(); ws.refresh(); };
   renderers.sum2l = () => { renderSummary2(); ws.refresh(); };
 
@@ -1923,6 +2094,7 @@
     show(cur);
   };
   setupSubs(document.querySelector('[data-key="loss"]'), 'lossSub');
+  setupSubs(document.querySelector('[data-key="data"]'), 'dataSub', renderCase);
   // 경사하강법 탭: 3·4단계는 같은 실험 장치를 쓰므로, 보이는 단계로 옮겨 붙인다
   const gdSim = document.getElementById('gdSim');
   setupSubs(document.querySelector('[data-key="gd"]'), 'gdSub', i => {
