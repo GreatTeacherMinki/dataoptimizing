@@ -151,7 +151,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025l"></script>
+<script src="assets/common.js?v=20261025m"></script>
 <script>
 (() => {
   const CASES = MF.CASES;
@@ -213,16 +213,18 @@
   // 데이터 범위 + 늘린 직선 (숨긴 데이터는 reveal일 때만)
   const bigChart = (cv, opts = {}) => {
     const x = prep(cv), xmax = C.predict.x * 1.06;
-    const ymax = Math.max(A * C.predict.x, ...(opts.reveal ? allY() : C.y)) * 1.1;
+    const ymax = Math.max(A * C.predict.x, ...(opts.reveal ? allY() : C.y), opts.reveal && C.cap ? C.cap.y : 0) * 1.1;
     const g = frame(x, W, HT, [0, xmax], [0, ymax], `${C.xl} (${C.xu})`, `${C.yl} (${C.yu})`);
     const dmax = Math.max(...C.x);
     g.clip();
     x.fillStyle = 'rgba(37,99,235,0.06)'; x.fillRect(g.px(0), g.py(ymax), g.px(dmax) - g.px(0), g.py(0) - g.py(ymax));
     x.strokeStyle = COL.mine; x.lineWidth = 3; x.beginPath(); x.moveTo(g.px(0), g.py(0)); x.lineTo(g.px(dmax), g.py(A * dmax)); x.stroke();
     x.setLineDash([7, 6]); x.beginPath(); x.moveTo(g.px(dmax), g.py(A * dmax)); x.lineTo(g.px(xmax), g.py(A * xmax)); x.stroke(); x.setLineDash([]);
+    if (opts.reveal && C.cap) { x.strokeStyle = '#94a3b8'; x.lineWidth = 2; x.setLineDash([8, 5]); x.beginPath(); x.moveTo(g.px(0), g.py(C.cap.y)); x.lineTo(g.px(xmax), g.py(C.cap.y)); x.stroke(); x.setLineDash([]); }
     if (opts.reveal) C.more.x.forEach((xv, i) => { x.strokeStyle = 'rgba(225,29,72,0.5)'; x.lineWidth = 2; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(g.px(xv), g.py(C.more.y[i])); x.lineTo(g.px(xv), g.py(A * xv)); x.stroke(); x.setLineDash([]); });
     x.restore();
     label(x, '데이터가 있는 구간', g.px(dmax / 2), P.t + 30, '#64748b', 'center', '600 12px Pretendard, sans-serif');
+    if (opts.reveal && C.cap) label(x, C.cap.name, g.px(xmax) - 6, g.py(C.cap.y) - 8, '#64748b', 'right', '700 12px Pretendard, sans-serif');
     C.x.forEach((xv, i) => dot(x, g.px(xv), g.py(C.y[i]), 4.5, COL.real));
     if (opts.reveal) C.more.x.forEach((xv, i) => diamond(x, g.px(xv), g.py(C.more.y[i]), 7, COL.pos));
     if (opts.px != null) { dot(x, g.px(opts.px), g.py(A * opts.px), 7, COL.move); label(x, `예측 ${fy(A * opts.px)}`, g.px(opts.px) - 10, g.py(A * opts.px) - 12, COL.move, 'right'); }
@@ -269,9 +271,9 @@
       no: ['빛이 많으면 식물이 빛을 피해 자라지 않아서', '측정할 때마다 자를 잘못 읽어서'],
       fb: '잎이 빛을 쓰는 속도에는 <b>한계</b>가 있어요(광포화). 빛이 적을 때는 빛을 늘리는 만큼 잘 자라지만, 한계에 가까워지면 빛을 더 줘도 덜 자라요. 그래서 그래프가 <b>점점 평평해지는 곡선</b>이 돼요.',
       fbNo: { '빛이 많으면 식물이 빛을 피해 자라지 않아서': '식물은 빛을 피하지 않아요. 빛이 많아도 여전히 자라지만, 늘어나는 양이 점점 줄어요.', '측정할 때마다 자를 잘못 읽어서': '측정 실수라면 점들이 위아래로 들쭉날쭉해야 해요. 여기서는 일정하게 한쪽으로 휘어요.' } },
-    trade: { ok: '수출이 줄어드는 양은 원래 수출액보다 커질 수 없어서',
+    trade: { ok: '관세가 오를 때마다 남은 수출의 일정 비율이 줄어드는데, 남은 수출이 점점 적어져서',
       no: ['관세가 오르면 다른 나라가 오히려 더 많이 사 줘서', '관세는 수출과 아무 관계가 없어서'],
-      fb: '원래 수출액이 약 22억 달러라서 아무리 관세가 올라도 22억 달러보다 많이 줄 수는 없어요. 남은 수출이 적을수록 더 줄어들 양도 적어서 그래프가 <b>점점 평평해지는 곡선</b>이 돼요.',
+      fb: '관세가 1%p 오르면 수출이 <b>남아 있는 양의 몇 %</b>씩 줄어요. 처음에는 남은 수출이 많아서 많이 줄지만, 줄어들수록 남은 양이 적어서 같은 1%p에도 덜 줄어요. 그리고 원래 수출액 22억 달러가 모두 사라지더라도 줄어든 양은 22억 달러를 넘을 수 없어요(그래프의 회색 점선). 그래서 그래프가 <b>점점 평평해지는 곡선</b>이 돼요.',
       fbNo: { '관세가 오르면 다른 나라가 오히려 더 많이 사 줘서': '관세가 오르면 상대 나라에서 우리 물건값이 비싸져서 보통 덜 사요.', '관세는 수출과 아무 관계가 없어서': '데이터를 보면 관세가 오를수록 수출 감소액이 커져요. 관계가 있어요.' } }
   };
   const SHAPES = [

@@ -567,7 +567,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261025l"></script>
+<script src="assets/common.js?v=20261025m"></script>
 <script>
 (() => {
   /* ===== 1차시와 2차시는 이 파일 하나로 만든다 =====
@@ -1806,7 +1806,7 @@
       x.font = '18px sans-serif';
       for (let k = 0; k < total; k++) { x.globalAlpha = k < left ? 1 : 0.15; x.fillText('📦', 112 + (k % 6) * 22, gy + 40 + Math.floor(k / 6) * 20); }
       x.globalAlpha = 1; x.font = '30px sans-serif'; x.fillText('🚢', 168, gy + 84);
-      bar('📉 줄어든 수출', caseSlope(c) * xv / 22, '#e11d48');
+      bar('📉 줄어든 수출 (막대 끝 = 원래 수출액 22억 달러)', caseSlope(c) * xv / 22, '#e11d48');
     }
   };
 
