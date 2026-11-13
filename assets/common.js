@@ -494,7 +494,7 @@
   /* compact: { summary: () => [[항목, 내용]], sections: () => [[제목, [[항목, 내용]]]] }
    *   주면 활동지 이미지를 생기부 참고용 간단 양식으로 만든다 (그래프·빈 칸 없이, 쓴 답만)
    */
-  MF.worksheet = function ({ lesson, title, q1hint, q2, getResult, extras = [], records = () => ({}), req, intro, resultTitle, check, hideAttach = false, compact = null }) {
+  MF.worksheet = function ({ lesson, title, q1hint, q2, getResult, extras = [], records = () => ({}), req, intro, resultTitle, check, hideAttach = false, compact = null, optional = false }) {
     const KEY = 'mf-ws-' + lesson, ID_KEY = 'mf-ws-id';
     const read = k => { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } };
     const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -600,7 +600,7 @@
       </div>
       ${REQ.map(([t, h], k) => `
         <div class="ws-req">
-          <div class="ws-req-t">필수 ${k + 1}. ${t}</div>
+          <div class="ws-req-t">${optional ? "선택" : "필수"} ${k + 1}. ${t}</div>
           <div class="small muted">${h}</div>
           <div data-slot="${k}"></div>
         </div>`).join('')}
@@ -710,7 +710,7 @@
       const emptyAt = ([, , steps], k) => steps
         ? steps.findIndex((_, j) => (data[`r${k}_${j}`] || '').trim().length < MIN)
         : ((data['r' + k] || '').trim().length < MIN ? 0 : -1);
-      const short = REQ.findIndex((r, k) => emptyAt(r, k) >= 0);
+      const short = optional ? -1 : REQ.findIndex((r, k) => emptyAt(r, k) >= 0); // optional이면 빈 칸이 있어도 저장한다
       if (short >= 0) {
         const j = emptyAt(REQ[short], short);
         MF.toast(REQ[short][2] ? `필수 ${short + 1}번의 「${REQ[short][2][j][0]}」 칸을 써 주세요.` : `필수 ${short + 1}번을 써 주세요.`);

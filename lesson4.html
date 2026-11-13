@@ -194,7 +194,7 @@
     <div class="step">
       <div class="step-head">
         <div class="step-num">✓</div>
-        <div><h2>나의 탐구 보고서</h2><p>내가 고른 주제에 맞춘 보고서예요. 짧은 글을 채운 뒤 이미지로 저장해요. 그래프, 화면에서 고른 답, 퀴즈 결과는 자동으로 담겨요.</p></div>
+        <div><h2>나의 탐구 보고서</h2><p>내가 고른 주제에 맞춘 보고서예요. 아래 칸은 모두 선택이라 쓰고 싶은 만큼 채운 뒤 이미지로 저장해요. 그래프, 화면에서 고른 답, 퀴즈 결과는 자동으로 담겨요.</p></div>
         <span class="step-time">15분</span>
       </div>
       <div class="box key" id="autoSum" style="margin-bottom:16px"></div>
@@ -208,7 +208,7 @@
   </div>
 </main>
 
-<script src="assets/common.js?v=20261113a"></script>
+<script src="assets/common.js?v=20261113b"></script>
 <script>
 (() => {
   const CASES = MF.CASES;
@@ -490,9 +490,6 @@
     renderSum();
     if (!C) return;
     $('autoSum').insertAdjacentHTML('afterbegin', `<div style="margin-bottom:8px"><b>📄 ${C.icon} ${C.name} 주제 맞춤 보고서</b> · 진로: ${C.career}</div>`);
-    const tas = document.querySelectorAll('.ws-step textarea');
-    if (tas[0]) tas[0].placeholder = `나는 ${C.career.split(' · ')[0]} 분야에 관심이 있어서, 이번 탐구 결과를 ___할 때 활용하고 싶다.`;
-    if (tas[1]) tas[1].placeholder = `처음에는 ${C.xl}이(가) 늘면 ${C.yl}도 ___라고 생각했는데, 숨겨진 데이터를 보고 ___을(를) 알게 되었다.`;
   };
   $('quiz').addEventListener('click', e => {
     const b = e.target.closest('.qz-opts button'); if (!b) return;
@@ -507,14 +504,18 @@
   const ws = MF.worksheet({
     lesson: 4, title: '직선의 한계와 탐구 보고서',
     resultTitle: '탐구 결과', hideAttach: true,
-    intro: '아래 칸에 한두 문장씩 써요. 흐린 글씨의 문장 틀에서 ___ 부분을 채우면 돼요. 그래프와 객관식 결과는 보고서에 자동으로 담겨요.',
+    intro: '아래 칸은 모두 <b>선택</b>이에요. 쓰고 싶은 칸만 채워도 이미지로 저장할 수 있어요. 그래프, 화면에서 고른 답, 퀴즈 결과는 보고서에 자동으로 담겨요.',
+    optional: true,
     req: [
-      ['짧은 글 (2칸)', '내 주제의 낱말로 한두 문장씩 써 주세요.', [
-        ['① 내 진로와 연결하기', '나는 ___ 분야에 관심이 있어서, 이번 탐구 결과를 ___할 때 활용하고 싶다.'],
-        ['② 생각이 바뀐 점', '처음에는 ___라고 생각했는데, 숨겨진 데이터를 보고 ___을(를) 알게 되었다.']
-      ]]
+      ['나의 탐구 보고서', '한 칸에 두세 문장씩 써 주세요. 위의 자동 정리와 앞 화면에서 쓴 답을 참고해도 좋아요.', [
+        ['① 탐구 동기: 왜 이 주제를 골랐나요?', '내 진로와 어떻게 이어지나요?'],
+        ['② 탐구 방법: 어떻게 규칙을 찾았나요?', '손실함수와 경사하강법을 어떻게 썼나요?'],
+        ['③ 탐구 결과: 무엇을 찾았나요?', '찾은 a와 그 뜻을 써요.'],
+        ['④ 한계와 원인: 직선은 언제 맞지 않았나요?', '숨겨진 데이터에서 발견한 것과 그 이유를 써요.'],
+        ['⑤ 느낀 점과 더 알아보고 싶은 것', '이번 캠프에서 배운 수학이 내 진로에 어떻게 쓰일까요?']
+      ]],
+      ['캠프 전체 후기', '네 번의 수업에서 가장 기억에 남는 것과 아쉬웠던 점을 자유롭게 써 주세요.']
     ],
-    extras: [{ key: 'review', title: '캠프 전체 후기', hint: '네 번의 수업에서 가장 기억에 남는 것과 아쉬웠던 점을 자유롭게 써 주세요.' }],
     check: () => { if (!C) return '1번 화면에서 탐구 주제를 골라 주세요.'; const st = quizState(), left = quizFor(K).filter(q => !st[q.id]).map(q => q.id.toUpperCase()); return left.length ? `4번 화면 퀴즈 ${left.join(', ')}번을 풀어 주세요.` : null; },
     compact: {
       // 보고서 맨 위: 그래프와 카드로 한눈에 보는 탐구 결과
@@ -556,7 +557,6 @@
         const right = [store.dir === DIR_OK[K], store.trend === '점점 커진다'].filter(Boolean).length;
         return [
           ['교사용 요약', [['확인 퀴즈 (첫 시도)', C ? `손실함수·경사하강법 ${quizScore()}/4` : ''], ['클릭 판단', C ? `2문항 중 ${right}개 맞음 (예측 방향 · 오차 변화)` : ''], ['처음 예상', C ? (store.guess ? (store.guess === SHAPE_OK[K] ? '맞음' : '다름 (예상이 바뀐 과정을 성장 근거로 활용)') : '고르지 않음') : '']]],
-          ['캠프 후기 (선택)', [['후기', ws.get('review')]]]
         ];
       }
     },
