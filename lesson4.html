@@ -40,6 +40,13 @@
   .pick-row button.wrong { border-color: #fda4af; background: #fff1f2; }
   .shape-cards button.on { border-color: var(--accent, #6d4aff); background: #f4f0ff; }
   #revChart { max-width: 1000px; }
+  /* 객관식 */
+  .qz-opts { display: grid; gap: 6px; margin-top: 8px; }
+  .qz-opts button { text-align: left; border: 2px solid var(--line); background: #fff; border-radius: 10px; padding: 7px 12px; font: inherit; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+  .qz-opts button.right { border-color: #16a34a; background: #f0fdf4; font-weight: 700; }
+  .qz-opts button.wrong { border-color: #fda4af; background: #fff1f2; }
+  .qz-fb { margin-top: 6px; } .qz-fb.ok { color: #166534; } .qz-fb.no { color: #be123c; font-weight: 700; }
+  #wsPrint .rp-quiz td, #wsPrint .rp-quiz th { font-size: 12.5px; }
   /* 보고서 그림 카드 */
   #wsPrint .rp-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
   #wsPrint .rp-card { border: 1px solid #ddd; border-radius: 10px; padding: 8px 12px; font-size: 14px; }
@@ -175,10 +182,11 @@
     <div class="step">
       <div class="step-head">
         <div class="step-num">✓</div>
-        <div><h2>탐구 보고서 쓰기</h2><p>1~4차시 탐구를 하나의 보고서로 정리해요. 아래 자동 정리를 참고해서 다섯 칸을 채우고 이미지로 저장해요.</p></div>
+        <div><h2>나의 탐구 보고서</h2><p>내가 고른 주제에 맞춘 보고서예요. <b>객관식 9문항</b>을 풀고, 짧은 글 <b>2칸</b>만 채운 뒤 이미지로 저장해요.</p></div>
         <span class="step-time">15분</span>
       </div>
       <div class="box key" id="autoSum" style="margin-bottom:16px"></div>
+      <div id="quiz"></div>
     </div>
   </section>
 
@@ -239,7 +247,7 @@
     const best = mean(C.x.map((x, i) => x * C.y[i])) / mean(C.x.map(x => x * x));
     const prev = l3(); A = prev.case === k && prev.found != null ? prev.found : best;
     dec = A < 0.1 ? 4 : A < 1 ? 3 : A < 10 ? 2 : 1;
-    if (store.case !== k) { Object.assign(store, { case: k, revealed: false, cause: null, shape: null, guess: null, trust: null, trustWhy: '', dir: null, trend: null }); persist(); }
+    if (store.case !== k) { Object.assign(store, { case: k, revealed: false, cause: null, shape: null, guess: null, trust: null, trustWhy: '', dir: null, trend: null, quiz: {} }); persist(); }
   };
   const allX = () => [...C.x, ...C.more.x], allY = () => [...C.y, ...C.more.y];
 
@@ -444,21 +452,71 @@
         <li><b>예측과 한계</b>: ${errSummary()}</li>
       </ul>`;
   };
+  /* 객관식 이해도 점검: A(공통 4문항) + B(내 주제 5문항, 3번 화면 종합)
+   * 첫 번째로 고른 답(first)을 따로 저장해서 보고서에는 첫 시도 기준으로 표시한다. */
+  const MODELS = { air: '계단 함수', plant: '지수함수 (광포화 곡선)', trade: '거듭제곱 함수 (탄력성 모델)' };
+  const USE = {
+    plant: ['식물 생장 결과를 조경·원예에 활용하는 방법으로 가장 알맞은 것은?', ['빛이 많을수록 무조건 잘 자라니 빛을 최대로 늘린다', '식물 종류에 맞는 알맞은 빛의 양을 정해 배치한다', '빛과 생장은 관계가 없으니 빛은 신경 쓰지 않는다'], 1, '빛을 늘리는 효과는 한계(광포화)에 가까워질수록 줄어들어요. 그래서 무작정 늘리기보다 알맞은 양을 정해요.'],
+    air: ['이 결과를 비행 계획에 활용하는 방법으로 가장 알맞은 것은?', ['거리만 보고 연료량을 정한다', '경유가 많을수록 연료를 덜 싣는다', '거리와 함께 이륙 횟수까지 따져 연료량을 정한다'], 2, '이륙할 때마다 연료가 한꺼번에 들기 때문에, 경유가 잦은 노선은 거리만으로 계산하면 연료가 모자랄 수 있어요.'],
+    trade: ['이 결과를 무역 협상에 활용하는 방법으로 가장 알맞은 것은?', ['관세 효과가 점점 둔해지는 곡선 모델로 영향을 예측해 참고한다', '관세를 올릴수록 수출 감소액이 끝없이 커진다고 보고 협상한다', '관세는 수출과 관계없으니 고려하지 않는다'], 0, '수출 감소액은 원래 수출액을 넘을 수 없어서 효과가 점점 둔해져요. 이런 곡선 모델로 예측해야 협상에 쓸 수 있어요.']
+  };
+  const quizFor = k => {
+    const c = CASES[k], cz = CAUSES[k], ok = SHAPE_OK[k];
+    const causeOpts = k === 'plant' ? [cz.no[0], cz.ok, cz.no[1]] : k === 'trade' ? [cz.no[0], cz.no[1], cz.ok] : [cz.ok, cz.no[0], cz.no[1]];
+    const others = Object.keys(MODELS).filter(o => o !== k).map(o => MODELS[o]);
+    const modelOpts = k === 'air' ? [others[0], MODELS[k], '기울기를 더 키운 직선', others[1]] : k === 'plant' ? ['기울기를 더 키운 직선', others[0], others[1], MODELS[k]] : [MODELS[k], others[0], '기울기를 더 키운 직선', others[1]];
+    const u = USE[k];
+    return [
+      { id: 'a1', part: 'A', q: '오차를 그냥 더하지 않고 제곱해서 평균을 내는 가장 큰 이유는?', o: ['계산을 빠르게 하려고', '양수 오차와 음수 오차가 서로 지워지지 않게 하려고', '오차를 더 작게 보이게 하려고', '데이터 개수를 줄이려고'], a: 1, why: '오차는 +도 있고 −도 있어서 그냥 더하면 서로 지워져요. 제곱하면 모두 양수가 되고, 큰 오차는 더 크게 반영돼요.' },
+      { id: 'a2', part: 'A', q: '기울기 a를 바꾸며 손실 L(a)를 그래프로 그리면 어떤 모양일까?', o: ['곧은 직선', '위로 볼록한 곡선', '아래로 볼록한 포물선 (이차함수)', '계단 모양'], a: 2, why: '손실은 a에 대한 이차함수라서 아래로 볼록한 포물선이 돼요. 가장 낮은 꼭짓점의 a가 가장 잘 맞는 기울기예요.' },
+      { id: 'a3', part: 'A', q: '경사하강법에서 지금 위치의 손실 그래프 기울기가 양수라면 a를 어떻게 바꿀까?', o: ['a를 키운다', 'a를 줄인다', 'a를 그대로 둔다', 'a를 0으로 바꾼다'], a: 1, why: '기울기가 양수면 오른쪽으로 갈수록 손실이 커지니, 반대인 왼쪽(a를 줄이는 쪽)으로 가야 바닥에 가까워져요.' },
+      { id: 'a4', part: 'A', q: '경사하강법에서 보폭(학습률)을 너무 크게 하면 어떤 일이 생길까?', o: ['바닥에 아주 천천히 다가간다', '바닥을 지나쳐 왔다 갔다 하며 멈추지 못할 수 있다', '손실이 항상 0이 된다', '보폭은 결과에 아무 영향이 없다'], a: 1, why: '한 번에 너무 멀리 움직이면 바닥을 넘어가 버려서 양쪽을 왔다 갔다 하거나 오히려 손실이 커질 수 있어요.' },
+      { id: 'b1', part: 'B', q: `숨겨진 데이터까지 놓고 보면, ${c.xl}과(와) ${c.yl}의 그래프는 실제로 어떤 모양일까?`, o: SHAPES.map(s => s.t), a: SHAPES.findIndex(s => s.k === ok), why: CAUSES[k].fb.replace(/<[^>]+>/g, '') },
+      { id: 'b2', part: 'B', q: '3차시에 찾은 직선이 숨겨진 데이터에서 맞지 않은 원인으로 가장 알맞은 것은?', o: causeOpts, a: causeOpts.indexOf(cz.ok), why: c.why },
+      { id: 'b3', part: 'B', q: '이 현상을 직선보다 더 잘 나타내는 모델은?', o: modelOpts, a: modelOpts.indexOf(MODELS[k]), why: c.model.text },
+      { id: 'b4', part: 'B', q: '선형 모델(직선)에 대한 설명으로 가장 알맞은 것은?', o: ['어떤 구간에서든 항상 정확하다', '데이터가 있던 구간에서는 쓸 만하지만, 범위를 벗어나면 크게 틀릴 수 있다', '데이터가 많아지면 저절로 곡선이 된다', '한 번이라도 틀리면 전혀 쓸모가 없다'], a: 1, why: `데이터가 있던 구간(${fy(Math.min(...c.x))}~${fy(Math.max(...c.x))} ${c.xu})에서는 직선이 잘 맞았어요. 선형 모델은 좁은 구간에서 쓸 만한 근사예요.` },
+      { id: 'b5', part: 'B', q: u[0], o: u[1], a: u[2], why: u[3] }
+    ];
+  };
+  const quizState = () => (store.quiz ||= {});
+  const renderQuiz = () => {
+    if (!C) { $('quiz').innerHTML = ''; return; }
+    const qs = quizFor(K), st = quizState();
+    const part = (p, title) => `<h3 style="margin:18px 0 8px">${title}</h3>` + qs.filter(q => q.part === p).map(q => {
+      const s = st[q.id], pick = s ? s.now : null;
+      return `<div class="box qz" data-q="${q.id}" style="margin-bottom:10px"><b>${q.id.toUpperCase()}. ${q.q}</b>
+        <div class="qz-opts">${q.o.map((o, i) => `<button data-i="${i}" class="${pick === i ? (i === q.a ? 'right' : 'wrong') : ''}">${'①②③④'[i]} ${o}</button>`).join('')}</div>
+        ${pick == null ? '' : `<div class="small qz-fb ${pick === q.a ? 'ok' : 'no'}">${pick === q.a ? '✔ 정답이에요.' : '✘ 다시 생각해 보세요.'} ${pick === q.a ? q.why : ''}</div>`}</div>`;
+    }).join('');
+    $('quiz').innerHTML = `<div class="box" style="background:#f4f0ff"><b>📄 ${C.icon} ${C.name} 주제 맞춤 보고서</b> · 진로: ${C.career}<p class="small" style="margin-top:4px">처음 고른 답이 보고서에 기록돼요. 틀리면 다시 골라서 해설을 확인할 수 있어요.</p></div>
+      ${part('A', '🧮 A. 손실함수와 경사하강법 (4문항)')}${part('B', `${C.icon} B. 내 주제로 확인하기 (5문항)`)}`;
+    // 짧은 글 2칸의 문장 틀도 내 주제에 맞춘다
+    const tas = document.querySelectorAll('.ws-step textarea');
+    if (tas[0]) tas[0].placeholder = `나는 ${C.career.split(' · ')[0]} 분야에 관심이 있어서, 이번 탐구 결과를 ___할 때 활용하고 싶다.`;
+    if (tas[1]) tas[1].placeholder = `처음에는 ${C.xl}이(가) 늘면 ${C.yl}도 ___라고 생각했는데, 숨겨진 데이터를 보고 ___을(를) 알게 되었다.`;
+  };
+  $('quiz').addEventListener('click', e => {
+    const b = e.target.closest('.qz-opts button'); if (!b) return;
+    const id = b.closest('[data-q]').dataset.q, i = +b.dataset.i, st = quizState();
+    st[id] = { first: st[id] ? st[id].first : i, now: i }; persist(); renderQuiz();
+  });
+  const quizScore = () => {
+    if (!C) return { A: 0, B: 0 };
+    const st = quizState(), qs = quizFor(K);
+    return { A: qs.filter(q => q.part === 'A' && st[q.id] && st[q.id].first === q.a).length, B: qs.filter(q => q.part === 'B' && st[q.id] && st[q.id].first === q.a).length };
+  };
   const ws = MF.worksheet({
     lesson: 4, title: '직선의 한계와 탐구 보고서',
     resultTitle: '탐구 결과', hideAttach: true,
-    intro: '1~4차시 탐구를 이 보고서 한 장에 모아요. 다섯 칸에 한두 문장씩만 쓰면 돼요. 그래프, 내 예상, 화면에서 고른 답은 그림과 함께 자동으로 담겨요.',
+    intro: '객관식 9문항을 다 풀었다면, 아래 두 칸에 한두 문장씩만 써요. 흐린 글씨의 문장 틀에서 ___ 부분을 채우면 돼요. 그래프와 객관식 결과는 보고서에 자동으로 담겨요.',
     req: [
-      ['나의 탐구 보고서 (1~4차시 종합)', '칸마다 흐린 글씨의 문장 틀에서 ___ 부분을 내 주제의 낱말로 채워 쓰면 돼요.', [
-        ['① 진로와 질문', '나는 ___에 관심이 있어서, ___이(가) ___에 어떤 영향을 주는지 알고 싶었다.'],
-        ['②-1 손실함수: 오차를 제곱해서 평균을 내는 이유와 손실 그래프의 모양은?', '오차를 그냥 더하면 ___ 때문에 제곱했다. 손실 L(a)의 그래프는 ___ 모양이었다.'],
-        ['②-2 경사하강법: 기울기의 부호와 보폭은 어떤 역할을 하나요?', '기울기가 양수면 a를 ___쪽으로, 음수면 ___쪽으로 옮긴다. 보폭이 너무 크면 ___, 너무 작으면 ___.'],
-        ['③ 한계와 더 나은 모델', '직선은 ___ 구간에서 실제보다 ___ 예측했다. 왜냐하면 ___ 때문이다. 그래서 ___ 모양의 모델이 필요하다.'],
-        ['④ 진로에서의 활용', '이 방법을 ___에서 ___할 때 쓸 수 있다.']
+      ['짧은 글 (2칸)', '내 주제의 낱말로 한두 문장씩 써 주세요.', [
+        ['① 내 진로와 연결하기', '나는 ___ 분야에 관심이 있어서, 이번 탐구 결과를 ___할 때 활용하고 싶다.'],
+        ['② 생각이 바뀐 점', '처음에는 ___라고 생각했는데, 숨겨진 데이터를 보고 ___을(를) 알게 되었다.']
       ]]
     ],
     extras: [{ key: 'review', title: '캠프 전체 후기', hint: '네 번의 수업에서 가장 기억에 남는 것과 아쉬웠던 점을 자유롭게 써 주세요.' }],
-    check: () => (!C ? '1번 화면에서 탐구 주제를 골라 주세요.' : null),
+    check: () => { if (!C) return '1번 화면에서 탐구 주제를 골라 주세요.'; const st = quizState(), left = quizFor(K).filter(q => !st[q.id]).map(q => q.id.toUpperCase()); return left.length ? `객관식 ${left.join(', ')}번을 풀어 주세요.` : null; },
     compact: {
       // 보고서 맨 위: 그래프와 카드로 한눈에 보는 탐구 결과
       top: () => {
@@ -487,14 +545,18 @@
               <div style="font-size:13px;margin-top:4px">직선 예측을 믿을 수 있을까?: <b>${esc(store.trust || '-')}</b>${store.trustWhy ? ` · ${esc(store.trustWhy)}` : ''}</div></div>
             <div class="rp-card"><b class="t">숨겨진 데이터에서 찾은 것</b>
               <div style="font-size:13px">${esc(errSummary())}</div>
-              <div style="font-size:13px;margin-top:4px">예측 방향: ${mark(store.dir, DIR_OK[K])}<br>오차 변화: ${mark(store.trend, '점점 커진다')}<br>한계 원인(해설): ${esc(CAUSES[K].ok)}</div></div>
-          </div>`;
+              <div style="font-size:13px;margin-top:4px">예측 방향: ${mark(store.dir, DIR_OK[K])}<br>오차 변화: ${mark(store.trend, '점점 커진다')}</div></div>
+          </div>
+          <h2>객관식 이해도 점검 (첫 시도 기준 · A ${quizScore().A}/4 · B ${quizScore().B}/5)</h2>
+          <table class="wp-tbl rp-quiz"><tr><th style="width:44px">번호</th><th>문항</th><th style="width:200px">처음 고른 답</th><th style="width:44px">결과</th></tr>
+            ${quizFor(K).map(q => { const s = quizState()[q.id], f = s ? s.first : null; return `<tr><td>${q.id.toUpperCase()}</td><td>${esc(q.q)}</td><td>${f == null ? '-' : esc(q.o[f])}${f != null && f !== q.a ? `<br><span style="color:#16a34a;font-size:12px">정답: ${esc(q.o[q.a])}</span>` : ''}</td><td class="${f === q.a ? 'ok' : 'no'}">${f === q.a ? '✔' : '✘'}</td></tr>`; }).join('')}
+          </table>`;
       },
       summary: () => [['수업', 'AI교과융합 캠프 「손실함수와 경사하강법을 활용한 데이터 최적화」 1~4차시 종합 탐구 보고서']],
       sections: () => {
         const right = [store.dir === DIR_OK[K], store.trend === '점점 커진다'].filter(Boolean).length;
         return [
-          ['교사용 요약', [['클릭 판단', C ? `2문항 중 ${right}개 맞음 (예측 방향 · 오차 변화)` : ''], ['처음 예상', C ? (store.guess ? (store.guess === SHAPE_OK[K] ? '맞음' : '다름 (예상이 바뀐 과정을 성장 근거로 활용)') : '고르지 않음') : '']]],
+          ['교사용 요약', [['객관식 (첫 시도)', C ? `A 손실함수·경사하강법 ${quizScore().A}/4 · B 내 주제 한계 이해 ${quizScore().B}/5` : ''], ['클릭 판단', C ? `2문항 중 ${right}개 맞음 (예측 방향 · 오차 변화)` : ''], ['처음 예상', C ? (store.guess ? (store.guess === SHAPE_OK[K] ? '맞음' : '다름 (예상이 바뀐 과정을 성장 근거로 활용)') : '고르지 않음') : '']]],
           ['캠프 후기 (선택)', [['후기', ws.get('review')]]]
         ];
       }
@@ -507,7 +569,7 @@
 
   /* ===== 시작 ===== */
   if (K) setCase(K);
-  const renderers = [renderPred, renderRev, renderCause, () => { renderSum(); ws.refresh(); }];
+  const renderers = [renderPred, renderRev, renderCause, () => { renderSum(); renderQuiz(); ws.refresh(); }];
   MF.wizard({ onShow: i => { if (!C && i) MF.toast('1번 화면에서 주제를 먼저 골라 주세요.'); renderers[i]?.(); } });
 })();
 </script>
