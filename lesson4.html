@@ -139,12 +139,12 @@
     </div>
   </section>
 
-  <!-- 3. 한계의 원인 -->
-  <section class="screen" data-title="한계의 원인">
+  <!-- 3. 원인과 해설 -->
+  <section class="screen" data-title="원인과 해설">
     <div class="step">
       <div class="step-head">
         <div class="step-num">3</div>
-        <div><h2>왜 직선이 맞지 않을까?</h2><p>숨겨진 데이터까지 모두 놓고 그래프의 <b>모양</b>을 살펴본 뒤, 그 <b>원인</b>을 찾아봐요.</p></div>
+        <div><h2>왜 직선이 맞지 않을까? 답과 해설</h2><p>숨겨진 데이터까지 놓고 본 그래프의 <b>실제 모양</b>과 그 <b>원인</b>을 확인해요. 읽은 내용은 보고서 ③칸에 내 말로 정리해요.</p></div>
         <span class="step-time">13분</span>
       </div>
       <div class="cols wide-left">
@@ -154,23 +154,19 @@
             <span style="color:var(--c-real)">● 3차시 데이터</span>
             <span style="color:var(--c-pos)">◆ 숨겨진 데이터</span>
             <span style="color:var(--c-mine)"><i></i>직선 y = ax</span>
-            <span style="color:var(--c-move)" id="modelLegend" hidden><i></i>실제 모델</span>
+            <span style="color:var(--c-move)"><i></i>실제 현상을 나타내는 곡선</span>
           </div>
         </div>
         <div>
-          <div class="box"><b>📈 그래프는 어떤 모양일까요?</b><p class="small" style="margin:4px 0 8px">점들 전체를 이은 모양과 가장 비슷한 것을 골라요.</p>
-            <div class="shape-cards" id="shapeCards"></div>
-          </div>
-          <div class="box" style="margin-top:12px"><b>🤔 원인은 무엇일까요?</b><p class="small" style="margin:4px 0 8px">가장 알맞은 것을 골라 보세요.</p>
-            <div class="cause-cards" id="causeCards"></div>
-            <div class="cause-fb" id="causeFb"></div>
-          </div>
+          <div class="box" id="ansShape"></div>
+          <div class="box key" style="margin-top:12px" id="ansCause"></div>
         </div>
       </div>
-      <details class="box tip" style="margin-top:14px" id="modelBox">
-        <summary style="cursor:pointer;font-weight:700">⭐ 심화: 실제로는 어떤 함수로 나타낼까?</summary>
-        <div id="modelBody" style="margin-top:8px"></div>
-      </details>
+      <div class="cols" style="margin-top:14px">
+        <div class="box tip" id="ansModel"></div>
+        <div class="box" id="ansMore"></div>
+      </div>
+    </div>
     </div>
   </section>
 
@@ -401,32 +397,36 @@
     { k: 'flat', t: '점점 평평해지는 곡선', d: 'M6 54 Q20 12 74 8' }
   ];
   const SHAPE_OK = { air: 'up', plant: 'flat', trade: 'flat' };
-  $('shapeCards').innerHTML = SHAPES.map(sh => `<button data-s="${sh.k}"><svg viewBox="0 0 80 60" width="64" height="48" aria-hidden="true"><path d="${sh.d}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg><span>${sh.t}</span></button>`).join('');
-  $('shapeCards').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; store.shape = b.dataset.s; persist(); renderCause(); });
-  $('modelBox').addEventListener('toggle', () => renderCause());
+  // 진로와 연결한 부연 설명
+  const MORE = {
+    plant: '실제 온실이나 조경에서는 이 한계(광포화점)를 알고, 빛을 무작정 늘리기보다 식물 종류에 맞는 빛의 양을 정해요.',
+    air: '항공사는 거리뿐 아니라 이륙 횟수까지 따져서 노선과 실을 연료량을 계획해요. 경유가 잦은 노선일수록 연료를 더 넉넉히 실어야 해요.',
+    trade: '경제학에서는 이런 곡선으로 관세가 수출에 주는 영향을 예측하고, 협상에서 관세 수준을 정할 때 참고해요.'
+  };
+  const shapeSVG = k => { const sh = SHAPES.find(s => s.k === k); return sh ? `<svg viewBox="0 0 80 60" width="64" height="48" aria-hidden="true" style="color:#2563eb"><path d="${sh.d}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>` : ''; };
   const renderCause = () => {
     if (!C) return;
-    // 전체 데이터 + 직선 (+ 심화를 열면 실제 모델 곡선)
-    const showModel = $('modelBox').open, g = bigChart($('causeChart'), { reveal: true }), x = $('causeChart').getContext('2d');
-    $('modelLegend').hidden = !showModel;
-    if (showModel) {
-      g.clip(); x.strokeStyle = COL.move; x.lineWidth = 3; x.beginPath();
-      const xm = C.predict.x * 1.06;
-      for (let k = 0; k <= 400; k++) { const t = xm * k / 400, X0 = g.px(t), Y0 = g.py(C.model.f(t)); k ? x.lineTo(X0, Y0) : x.moveTo(X0, Y0); }
-      x.stroke(); x.restore();
-    }
-    $('modelBody').innerHTML = `<p><b>${C.model.name}</b></p><p class="mono" style="margin:6px 0;font-size:16px"><b>${C.model.formula}</b></p><p class="small">${C.model.text}</p><p class="small muted" style="margin-top:6px">주황 곡선이 이 함수의 그래프예요. 직선보다 숨겨진 데이터까지 훨씬 잘 맞아요.</p>`;
-    // 그래프 모양 고르기
-    const sh = store.shape, okShape = SHAPE_OK[K];
-    $('shapeCards').querySelectorAll('button').forEach(b => { b.classList.toggle('right', b.dataset.s === sh && sh === okShape); b.classList.toggle('wrong', b.dataset.s === sh && sh !== okShape); });
-    // 원인 카드 (순서는 주제마다 고정해 섞어 둔다)
-    const cz = CAUSES[K], opts = K === 'plant' ? [cz.no[0], cz.ok, cz.no[1]] : K === 'trade' ? [cz.no[0], cz.no[1], cz.ok] : [cz.ok, cz.no[0], cz.no[1]];
-    $('causeCards').innerHTML = opts.map(t => `<button data-t="${t.replace(/"/g, '&quot;')}">${t}</button>`).join('');
-    const pick = store.cause;
-    $('causeCards').querySelectorAll('button').forEach(b => { if (b.dataset.t === pick) b.classList.add(pick === cz.ok ? 'right' : 'wrong'); });
-    $('causeFb').innerHTML = !pick ? '' : pick === cz.ok ? `<div class="box key small">✅ ${cz.fb}</div>` : `<div class="box tip small">🤔 ${cz.fbNo[pick]} 다른 것을 골라 보세요.</div>`;
+    // 전체 데이터 + 직선 + 실제 현상을 나타내는 곡선
+    const g = bigChart($('causeChart'), { reveal: true }), x = $('causeChart').getContext('2d');
+    g.clip(); x.strokeStyle = COL.move; x.lineWidth = 3; x.beginPath();
+    const xm = C.predict.x * 1.06;
+    for (let k = 0; k <= 400; k++) { const t = xm * k / 400, X0 = g.px(t), Y0 = g.py(C.model.f(t)); k ? x.lineTo(X0, Y0) : x.moveTo(X0, Y0); }
+    x.stroke(); x.restore();
+    const okShape = SHAPE_OK[K], sh = SHAPES.find(s => s.k === okShape), mine = SHAPES.find(s => s.k === store.guess);
+    $('ansShape').innerHTML = `<b>📈 정답: 그래프의 실제 모양</b>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px">${shapeSVG(okShape)}<b style="font-size:18px">${sh.t}</b></div>
+      <p class="small" style="margin-top:6px">${mine ? `1번 화면에서 고른 내 예상: <b>${mine.t}</b> ${mine.k === okShape ? '<span style="color:#16a34a;font-weight:700">✔ 맞았어요!</span>' : '<span style="color:#e11d48;font-weight:700">✘ 예상과 달랐어요. 어디서 달라졌는지 생각해 봐요.</span>'}` : '1번 화면에서 예상을 고르지 않았어요.'}</p>`;
+    const cz = CAUSES[K];
+    $('ansCause').innerHTML = `<b>🔍 정답: 직선이 맞지 않는 원인</b>
+      <p style="margin-top:6px;font-weight:700;color:#dc2626">${cz.ok}</p>
+      <p class="small" style="margin-top:6px">${cz.fb}</p>`;
+    $('ansModel').innerHTML = `<b>⭐ 실제로는 어떤 함수로 나타낼까?</b>
+      <p style="margin-top:6px"><b>${C.model.name}</b></p><p class="mono" style="margin:4px 0;font-size:15px"><b>${C.model.formula}</b></p>
+      <p class="small">${C.model.text}</p><p class="small muted" style="margin-top:4px">그래프의 주황 곡선이 이 함수예요. 숨겨진 데이터까지 직선보다 훨씬 잘 맞아요.</p>`;
+    $('ansMore').innerHTML = `<b>➕ 더 생각해 보기</b>
+      <p class="small" style="margin-top:6px"><b>직선은 쓸모없을까?</b> 데이터가 있던 구간(${range()})에서는 직선이 잘 맞았어요. 선형 모델은 <b>좁은 구간에서 쓸 만한 근사</b>이고, 그 구간을 벗어나면 현상의 원리에 맞는 모델이 필요해요.</p>
+      <p class="small" style="margin-top:6px"><b>${C.icon} 진로와 연결</b> ${MORE[K]}</p>`;
   };
-  $('causeCards').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; store.cause = b.dataset.t; persist(); renderCause(); });
 
   /* ===== 4. 탐구 보고서 ===== */
   const errSummary = () => {
@@ -487,14 +487,14 @@
               <div style="font-size:13px;margin-top:4px">직선 예측을 믿을 수 있을까?: <b>${esc(store.trust || '-')}</b>${store.trustWhy ? ` · ${esc(store.trustWhy)}` : ''}</div></div>
             <div class="rp-card"><b class="t">숨겨진 데이터에서 찾은 것</b>
               <div style="font-size:13px">${esc(errSummary())}</div>
-              <div style="font-size:13px;margin-top:4px">예측 방향: ${mark(store.dir, DIR_OK[K])}<br>오차 변화: ${mark(store.trend, '점점 커진다')}<br>그래프 모양: ${mark(shapeT(store.shape), shapeT(okShape))}<br>한계 원인: ${mark(store.cause, CAUSES[K].ok)}</div></div>
+              <div style="font-size:13px;margin-top:4px">예측 방향: ${mark(store.dir, DIR_OK[K])}<br>오차 변화: ${mark(store.trend, '점점 커진다')}<br>한계 원인(해설): ${esc(CAUSES[K].ok)}</div></div>
           </div>`;
       },
       summary: () => [['수업', 'AI교과융합 캠프 「손실함수와 경사하강법을 활용한 데이터 최적화」 1~4차시 종합 탐구 보고서']],
       sections: () => {
-        const right = [store.dir === DIR_OK[K], store.trend === '점점 커진다', store.shape === SHAPE_OK[K], C && store.cause === CAUSES[K].ok].filter(Boolean).length;
+        const right = [store.dir === DIR_OK[K], store.trend === '점점 커진다'].filter(Boolean).length;
         return [
-          ['교사용 요약', [['클릭 판단', C ? `4문항 중 ${right}개 맞음 (예측 방향 · 오차 변화 · 그래프 모양 · 한계 원인)` : ''], ['처음 예상', C ? (store.guess ? (store.guess === SHAPE_OK[K] ? '맞음' : '다름 (예상이 바뀐 과정을 성장 근거로 활용)') : '고르지 않음') : '']]],
+          ['교사용 요약', [['클릭 판단', C ? `2문항 중 ${right}개 맞음 (예측 방향 · 오차 변화)` : ''], ['처음 예상', C ? (store.guess ? (store.guess === SHAPE_OK[K] ? '맞음' : '다름 (예상이 바뀐 과정을 성장 근거로 활용)') : '고르지 않음') : '']]],
           ['캠프 후기 (선택)', [['후기', ws.get('review')]]]
         ];
       }
