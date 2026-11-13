@@ -25,6 +25,7 @@
   .sit-box .sit-pic { font-size: 15px; line-height: 1.7; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
   .sit-box ul { margin: 6px 0 0 18px; padding: 0; }
   .sit-box li { margin: 3px 0; }
+  .sit-box li.key-red { color: #dc2626; font-weight: 700; }
   .route { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-size: 12.5px; }
   .route .stop { background: #1e3a8a; color: #fff; border-radius: 999px; padding: 1px 8px; font-weight: 700; }
   .route .stop.isle { background: #e11d48; }
@@ -102,7 +103,7 @@
             <div class="box tip" style="margin-top:12px" id="predQ"></div>
             <div class="box" style="margin-top:12px"><b>🤔 이 예측을 믿을 수 있을까요?</b>
               <div class="pick-row" id="trustCards" style="margin-top:8px"></div>
-              <input type="text" id="trustWhy" maxlength="60" placeholder="이유 한 줄 (예: 빛이 많아도 끝없이 자랄 수는 없어서)" style="margin-top:8px;width:100%">
+              <input type="text" id="trustWhy" maxlength="60" placeholder="이유 한 줄 (예: 데이터가 없는 먼 구간이라 그대로 맞을지 모르겠어서)" style="margin-top:8px;width:100%">
             </div>
           </div>
         </div>
@@ -251,21 +252,21 @@
   const range = () => `${fy(Math.min(...C.x))}~${fy(Math.max(...C.x))} ${C.xu}`;
   const SIT = {
     plant: {
-      q: '🌱 빛을 계속 쬐면 식물은 한없이 계속 자랄까?',
+      q: '🌱 하루에 받는 빛의 양을 계속 늘리면, 1주 동안 자라는 키도 같은 비율로 계속 늘어날까?',
       html: () => `<b>🔎 상황 이해하기: 식물은 빛으로 어떻게 자랄까?</b>
         <div class="sit-pic">☀️ 빛 &nbsp;→&nbsp; 🍃 잎 속 <b>광합성 공장</b> &nbsp;→&nbsp; 🍬 양분 &nbsp;→&nbsp; 🌱 자람</div>
         <ul class="small">
           <li>잎은 빛을 원료로 양분을 만드는 <b>공장</b>이에요.</li>
-          <li>공장 안의 기계(엽록체) 수는 정해져 있어서, 한 번에 처리할 수 있는 빛의 양에는 <b>한계</b>가 있어요.</li>
+          <li class="key-red">공장 안의 기계(엽록체) 수는 정해져 있어서, 한 번에 처리할 수 있는 빛의 양에는 한계가 있어요.</li>
           <li>3차시 데이터는 하루 빛의 양이 <b>${range()}</b>인 구간만 잰 거예요.</li>
         </ul>`
     },
     air: {
       q: '✈️ 경유가 잦아지면 1 km를 갈 때 드는 연료는 그대로일까?',
       html: () => `<b>🔎 상황 이해하기: 비행기 연료는 언제 많이 들까?</b>
-        <div class="sit-pic"><div class="route"><span class="stop">인천</span><span class="gap wide">870 km</span><span class="stop">상하이</span><span class="gap wide">1,230 km</span><span class="stop">홍콩</span><span class="gap wide">1,120 km</span><span class="stop">마닐라</span>${[1, 2, 3, 4, 5, 6, 7].map(k => `<span class="gap">400</span><span class="stop isle">섬${k}</span>`).join('')}</div></div>
+        <div class="sit-pic">${routeSVG()}</div>
         <ul class="small">
-          <li>연료는 <b>날아간 거리만큼</b> 꾸준히 들고, <b>이륙해서 높이 올라갈 때</b> 한꺼번에 많이(약 900 kg) 들어요.</li>
+          <li class="key-red">연료는 날아간 거리만큼 꾸준히 들고, 이륙해서 높이 올라갈 때 한꺼번에 많이(약 900 kg) 들어요.</li>
           <li>3차시 데이터(<b>${range()}</b>)는 약 1,100 km마다 한 번씩 경유했어요.</li>
           <li>마닐라 다음부터는 <b>400 km마다</b> 작은 섬 공항을 경유해요.</li>
         </ul>`
@@ -276,10 +277,25 @@
         <div class="sit-pic">원래 수출액 (줄어들 수 있는 최대)<div class="cap-bar"><span>22억 달러</span></div></div>
         <ul class="small">
           <li>관세가 오르면 상대 나라에서 우리 물건값이 비싸져서 덜 사요.</li>
-          <li>그래도 수출이 줄어드는 양은 <b>원래 수출액 22억 달러보다 클 수 없어요.</b></li>
+          <li class="key-red">그래도 수출이 줄어드는 양은 원래 수출액 22억 달러보다 클 수 없어요.</li>
           <li>3차시 데이터는 관세를 <b>${range()}</b> 올린 구간만 있어요.</li>
         </ul>`
     }
+  };
+  // 항공 노선 그림: 경유지(이륙하는 곳)를 실제 거리 비율대로 점으로 찍는다
+  const routeSVG = () => {
+    const X = d => 22 + d / 6200 * 356, main = [0, 870, 2100, 3220], isle = [1, 2, 3, 4, 5, 6, 7].map(k => 3220 + 400 * k);
+    const plane = (d, c) => `<text x="${X(d)}" y="52" font-size="19" text-anchor="middle" fill="${c}">✈</text>`;
+    return `<svg viewBox="0 0 400 100" width="100%" role="img" aria-label="경유 노선 그림">
+      <rect x="${X(0)}" y="8" width="${X(2700) - X(0)}" height="66" rx="6" fill="#dbeafe"/>
+      <text x="${(X(0) + X(2700)) / 2}" y="24" font-size="13" text-anchor="middle" fill="#1e3a8a" font-weight="700">3차시 데이터 구간</text>
+      <line x1="${X(0)}" y1="60" x2="${X(6200)}" y2="60" stroke="#94a3b8" stroke-width="2"/>
+      ${main.map(d => plane(d, '#1e3a8a')).join('')}${isle.map(d => plane(d, '#e11d48')).join('')}
+      <text x="${X(0)}" y="92" font-size="13" text-anchor="middle" fill="#334155">출발</text>
+      <text x="${(X(870) + X(3220)) / 2}" y="92" font-size="13" text-anchor="middle" fill="#1e3a8a" font-weight="700">약 1,100 km마다 이륙</text>
+      <text x="${(X(3620) + X(6020)) / 2}" y="92" font-size="13" text-anchor="middle" fill="#e11d48" font-weight="700">400 km마다 이륙</text>
+      <text x="${(X(3620) + X(6020)) / 2}" y="24" font-size="13" text-anchor="middle" fill="#64748b">숨겨진 구간</text>
+    </svg><div class="small muted" style="margin-top:2px">✈ 하나 = 비행기가 다시 이륙하는 곳 (경유지)</div>`;
   };
   const TRUST = ['믿을 수 있다', '조금 의심된다', '맞지 않을 것 같다'];
   const pickRow = (el, opts, cur, right) => {
