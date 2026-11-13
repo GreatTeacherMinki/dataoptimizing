@@ -762,6 +762,7 @@
           <div><div class="wp-k">AI 융합캠프(조민기) · ${lesson}차시 활동 기록</div><h1>${esc(title)}</h1></div>
           <div class="wp-id">학번 <b>${esc(no)}</b> · 이름 <b>${esc(name)}</b><br>${date}</div>
         </div>
+        ${compact.top ? compact.top() : ''}
         <h2>활동 요약</h2>
         ${tbl(compact.summary())}
         <h2>학생 서술</h2>
